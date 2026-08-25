@@ -182,6 +182,10 @@
   .card:hover{border-color:var(--accent);transform:translateY(-1px);}
   .card.dragging{opacity:.4;transform:scale(.98);}
   .card .c-title{font-size:13.5px;font-weight:600;margin-bottom:6px;}
+  .card .c-desc{
+    font-size:12px;color:var(--ink-soft);margin:-2px 0 8px;line-height:1.4;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
   .card .c-meta{display:flex;justify-content:space-between;align-items:center;gap:6px;}
   .chip{font-size:10.5px;padding:2px 8px;border-radius:999px;font-weight:500;white-space:nowrap;}
   .chip.pr-high{background:var(--red-soft);color:var(--red);}
@@ -230,10 +234,11 @@
   .modal h3{font-family:'Space Grotesk';margin:0 0 16px;font-size:19px;}
   .field{margin-bottom:13px;}
   .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-weight:500;}
-  .field input, .field select{
+  .field input, .field select, .field textarea{
     width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;
     font-family:'IBM Plex Sans';font-size:13.5px;background:var(--paper);color:var(--ink);
   }
+  .field textarea{resize:vertical;min-height:60px;line-height:1.5;}
   .field-row{display:flex;gap:10px;}
   .field-row .field{flex:1;}
   .modal-actions{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:10px;}
@@ -331,6 +336,10 @@
     <div class="field">
       <label>Dự án / Nhóm</label>
       <input type="text" id="f-project" placeholder="VD: Dự án A">
+    </div>
+    <div class="field">
+      <label>Mô tả nội dung</label>
+      <textarea id="f-desc" rows="3" placeholder="Mô tả chi tiết công việc cần làm..."></textarea>
     </div>
     <div class="field-row">
       <div class="field">
@@ -457,10 +466,10 @@ for delete using (true);`;
   }
 
   function rowToTask(r){
-    return {id:r.id, title:r.title, project:r.project, start:r.start_date, due:r.due_date, priority:r.priority, status:r.status};
+    return {id:r.id, title:r.title, project:r.project, description:r.description || '', start:r.start_date, due:r.due_date, priority:r.priority, status:r.status};
   }
   function taskToRow(t){
-    return {title:t.title, project:t.project, start_date:t.start, due_date:t.due, priority:t.priority, status:t.status};
+    return {title:t.title, project:t.project, description:t.description || '', start_date:t.start, due_date:t.due, priority:t.priority, status:t.status};
   }
 
   async function loadTasks(){
@@ -525,11 +534,11 @@ for delete using (true);`;
     const t = todayStr();
     const off = (n) => { const d=new Date(); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
     return [
-      {id:uid(), title:'Xây dựng bộ nhận diện thương hiệu', project:'Sản phẩm mới', start:off(-2), due:off(4), priority:'high', status:'doing'},
-      {id:uid(), title:'Thiết kế bài đăng mạng xã hội tuần', project:'Social Media', start:off(0), due:off(2), priority:'med', status:'todo'},
-      {id:uid(), title:'In ấn brochure sự kiện', project:'Print', start:off(-5), due:off(-1), priority:'high', status:'doing'},
-      {id:uid(), title:'Tái định vị thương hiệu sản phẩm', project:'Repositioning', start:off(1), due:off(9), priority:'med', status:'todo'},
-      {id:uid(), title:'Duyệt bản in danh thiếp', project:'Print', start:off(-6), due:off(-3), priority:'low', status:'done'},
+      {id:uid(), title:'Xây dựng bộ nhận diện thương hiệu', project:'Sản phẩm mới', description:'Thiết kế logo, bảng màu và font chữ cho thương hiệu mới.', start:off(-2), due:off(4), priority:'high', status:'doing'},
+      {id:uid(), title:'Thiết kế bài đăng mạng xã hội tuần', project:'Social Media', description:'', start:off(0), due:off(2), priority:'med', status:'todo'},
+      {id:uid(), title:'In ấn brochure sự kiện', project:'Print', description:'', start:off(-5), due:off(-1), priority:'high', status:'doing'},
+      {id:uid(), title:'Tái định vị thương hiệu sản phẩm', project:'Repositioning', description:'', start:off(1), due:off(9), priority:'med', status:'todo'},
+      {id:uid(), title:'Duyệt bản in danh thiếp', project:'Print', description:'', start:off(-6), due:off(-3), priority:'low', status:'done'},
     ];
   }
 
@@ -699,6 +708,7 @@ for delete using (true);`;
               return `
                 <div class="card ${colorClass}" draggable="true" data-id="${t.id}">
                   <div class="c-title">${escapeHtml(t.title)}</div>
+                  ${t.description ? `<div class="c-desc">${escapeHtml(t.description)}</div>` : ''}
                   <div class="c-meta">
                     <span class="chip ${prClass}">${prLabel}</span>
                     <span class="c-date">${fmtDate(t.start)} → ${fmtDate(t.due)}</span>
@@ -798,6 +808,7 @@ for delete using (true);`;
     $('#modalTitle').textContent = t ? 'Sửa công việc' : 'Thêm công việc';
     $('#f-title').value = t ? t.title : '';
     $('#f-project').value = t ? t.project : '';
+    $('#f-desc').value = t ? (t.description || '') : '';
     $('#f-start').value = t ? t.start : todayStr();
     $('#f-due').value = t ? t.due : todayStr();
     $('#f-priority').value = t ? t.priority : 'med';
@@ -815,12 +826,13 @@ for delete using (true);`;
     const title = $('#f-title').value.trim();
     if(!title){ $('#f-title').focus(); return; }
     let project = $('#f-project').value.trim() || 'Chưa phân loại';
+    const description = $('#f-desc').value.trim();
     let start = $('#f-start').value || todayStr();
     let due = $('#f-due').value || start;
     if(due < start) due = start;
     const priority = $('#f-priority').value;
     let status = $('#f-status').value;
-    const fields = {title, project, start, due, priority, status};
+    const fields = {title, project, description, start, due, priority, status};
 
     const saveBtn = $('#saveBtn');
     saveBtn.disabled = true;
@@ -862,6 +874,7 @@ for delete using (true);`;
     return {
       'Tên công việc': t.title,
       'Dự án': t.project,
+      'Mô tả nội dung': t.description || '',
       'Ngày bắt đầu': t.start,
       'Hạn hoàn thành': t.due,
       'Mức ưu tiên': priorityLabel(t.priority),
@@ -924,7 +937,7 @@ for delete using (true);`;
 
     const allSorted = [...tasks].sort((a,b)=> a.due.localeCompare(b.due));
     const wsAll = XLSX.utils.json_to_sheet(allSorted.map(taskRow));
-    wsAll['!cols'] = [{wch:32},{wch:18},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
+    wsAll['!cols'] = [{wch:32},{wch:18},{wch:34},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
     XLSX.utils.book_append_sheet(wb, wsAll, 'Toàn bộ công việc');
 
     // Sheet riêng cho các công việc đang chậm deadline, xếp theo mức độ trễ
@@ -935,7 +948,7 @@ for delete using (true);`;
     const wsOverdue = overdueRows.length
       ? XLSX.utils.json_to_sheet(overdueRows)
       : XLSX.utils.json_to_sheet([{'Ghi chú':'Không có công việc chậm deadline'}]);
-    wsOverdue['!cols'] = [{wch:32},{wch:18},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16},{wch:14}];
+    wsOverdue['!cols'] = [{wch:32},{wch:18},{wch:34},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16},{wch:14}];
     XLSX.utils.book_append_sheet(wb, wsOverdue, 'Chậm deadline');
 
     const statusGroups = [
@@ -948,7 +961,7 @@ for delete using (true);`;
         .sort((a,b)=> a.due.localeCompare(b.due))
         .map(taskRow);
       const ws = rows.length ? XLSX.utils.json_to_sheet(rows) : XLSX.utils.json_to_sheet([{'Ghi chú':'Không có công việc'}]);
-      ws['!cols'] = [{wch:32},{wch:18},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
+      ws['!cols'] = [{wch:32},{wch:18},{wch:34},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
       XLSX.utils.book_append_sheet(wb, ws, g.name);
     });
 
@@ -958,7 +971,7 @@ for delete using (true);`;
         .map(taskRow);
       const safeName = p.replace(/[\\\/\?\*\[\]:]/g,'').slice(0,28) || 'Dự án';
       const ws = XLSX.utils.json_to_sheet(rows);
-      ws['!cols'] = [{wch:32},{wch:18},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
+      ws['!cols'] = [{wch:32},{wch:18},{wch:34},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
       XLSX.utils.book_append_sheet(wb, ws, safeName);
     });
 
