@@ -152,7 +152,7 @@
   .runway-bar span{position:relative;font-size:11px;font-weight:600;color:#fff;white-space:nowrap;}
 
   /* ===== Board view ===== */
-  .board{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
   .board-col{background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);
     padding:12px;min-height:200px;box-shadow:var(--shadow);}
   .board-col h4{
@@ -161,9 +161,18 @@
   }
   .board-col h4 .count{background:var(--grey-chip);color:var(--ink);border-radius:999px;
     padding:1px 8px;font-size:11px;}
+  .board-col.col-overdue{border-color:var(--red);}
+  .board-col.col-overdue h4{color:var(--red);}
+  .board-col.col-overdue h4 .count{background:var(--red-soft);color:var(--red);}
   .board-col-body{min-height:60px;border-radius:8px;transition:background .12s,outline .12s;}
   .board-col.drag-over .board-col-body{
     outline:2px dashed var(--accent);outline-offset:-2px;background:var(--accent-soft);
+  }
+  .board-col.col-overdue.drag-over .board-col-body{
+    outline:2px dashed var(--red);background:var(--red-soft);
+  }
+  @media (max-width:980px){
+    .board{grid-template-columns:repeat(2,1fr);}
   }
   .card{
     background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:11px 12px;
@@ -299,6 +308,7 @@
         <option value="all">Tất cả trạng thái</option>
         <option value="todo">Chưa làm</option>
         <option value="doing">Đang làm</option>
+        <option value="overdue">Chậm deadline</option>
         <option value="done">Hoàn thành</option>
       </select>
       <button class="btn-secondary" id="exportBtn">⬇ Xuất Excel</button>
@@ -560,10 +570,12 @@ for delete using (true);`;
   }
   function filteredTasks(){
     const f = currentFilters();
-    return tasks.filter(t=>
-      (f.project==='all' || t.project===f.project) &&
-      (f.status==='all' || t.status===f.status)
-    );
+    return tasks.filter(t=>{
+      if(f.project!=='all' && t.project!==f.project) return false;
+      if(f.status==='all') return true;
+      if(f.status==='overdue') return t.status!=='done' && t.due < todayStr();
+      return t.status === f.status;
+    });
   }
   function renderProjectFilter(){
     const sel = $('#filterProject');
@@ -662,12 +674,22 @@ for delete using (true);`;
     const cols = [
       {key:'todo', label:'Chưa làm'},
       {key:'doing', label:'Đang làm'},
+      {key:'overdue', label:'Chậm deadline'},
       {key:'done', label:'Hoàn thành'}
     ];
+    // Phân loại: quá hạn được tách thành cột riêng (ưu tiên trên trạng thái todo/doing);
+    // Hoàn thành luôn thuộc cột Hoàn thành dù có quá hạn hay không.
+    function colKeyOf(t){
+      if(t.status === 'done') return 'done';
+      if(t.due < todayStr()) return 'overdue';
+      return t.status; // 'todo' hoặc 'doing'
+    }
+
     root.innerHTML = `<div class="board">${cols.map(c=>{
-      const items = list.filter(t=>t.status===c.key);
+      const items = list.filter(t=> colKeyOf(t) === c.key);
+      const isOverdueCol = c.key === 'overdue';
       return `
-        <div class="board-col" data-status="${c.key}">
+        <div class="board-col ${isOverdueCol?'col-overdue':''}" data-status="${c.key}">
           <h4>${c.label} <span class="count">${items.length}</span></h4>
           <div class="board-col-body" data-status="${c.key}">
             ${items.map(t=>{
@@ -702,7 +724,11 @@ for delete using (true);`;
       });
     });
 
+    // Cột "Chậm deadline" là tự động (tính theo hạn chót), không nhận thả trực tiếp —
+    // muốn hết quá hạn thì kéo sang "Hoàn thành" hoặc sửa lại hạn hoàn thành trong modal.
     $$('.board-col', root).forEach(col=>{
+      const targetStatus = col.dataset.status;
+      if(targetStatus === 'overdue') return;
       col.addEventListener('dragover', (e)=>{
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
@@ -715,13 +741,12 @@ for delete using (true);`;
         e.preventDefault();
         col.classList.remove('drag-over');
         const id = e.dataTransfer.getData('text/plain');
-        const newStatus = col.dataset.status;
         const t = tasks.find(x=>x.id===id);
-        if(!t || t.status === newStatus) return;
+        if(!t || t.status === targetStatus) return;
         const draggedEl = root.querySelector(`.card[data-id="${id}"]`);
         if(draggedEl) draggedEl.dataset.justDragged = '1';
         const prevStatus = t.status;
-        t.status = newStatus;
+        t.status = targetStatus;
         render();
         const ok = await updateTaskRemote(id, t);
         if(!ok){ t.status = prevStatus; render(); }
@@ -829,17 +854,19 @@ for delete using (true);`;
   // ---------- Excel export ----------
   function statusLabel(s){ return s==='todo'?'Chưa làm':s==='doing'?'Đang làm':'Hoàn thành'; }
   function priorityLabel(p){ return p==='high'?'Cao':p==='med'?'Trung bình':'Thấp'; }
+  function dueStateLabel(t){
+    return {green:'Hoàn thành', red:'Chậm deadline', yellow:'Sắp tới hạn', blue:'Đúng hạn'}[cardColorKey(t)];
+  }
 
   function taskRow(t){
-    const overdue = t.status!=='done' && t.due < todayStr();
     return {
       'Tên công việc': t.title,
       'Dự án': t.project,
       'Ngày bắt đầu': t.start,
       'Hạn hoàn thành': t.due,
       'Mức ưu tiên': priorityLabel(t.priority),
-      'Trạng thái': statusLabel(t.status),
-      'Quá hạn': overdue ? 'Có' : 'Không'
+      'Trạng thái công việc': statusLabel(t.status),
+      'Tình trạng hạn chót': dueStateLabel(t)
     };
   }
 
@@ -866,22 +893,50 @@ for delete using (true);`;
       {'Chỉ số': 'Đã hoàn thành', 'Giá trị': done},
       {'Chỉ số': 'Đang thực hiện', 'Giá trị': doing},
       {'Chỉ số': 'Chưa làm', 'Giá trị': todo},
-      {'Chỉ số': 'Quá hạn', 'Giá trị': overdue},
+      {'Chỉ số': 'Chậm deadline', 'Giá trị': overdue},
       {'Chỉ số': 'Tỷ lệ hoàn thành', 'Giá trị': total ? Math.round(done/total*100)+'%' : '0%'},
-      {'Chỉ số': '', 'Giá trị': ''},
-      {'Chỉ số': 'Số công việc theo dự án', 'Giá trị': ''},
     ];
-    projects.forEach(p=>{
-      overviewRows.push({'Chỉ số': '— ' + p, 'Giá trị': tasks.filter(t=>t.project===p).length});
-    });
     const wsOverview = XLSX.utils.json_to_sheet(overviewRows, {skipHeader:false});
     wsOverview['!cols'] = [{wch:28},{wch:16}];
     XLSX.utils.book_append_sheet(wb, wsOverview, 'Tổng quan');
 
+    // Sheet riêng: trạng thái chi tiết theo từng dự án, để thấy rõ dự án nào đang ổn / đang chậm
+    const projectStatusRows = projects.map(p=>{
+      const items = tasks.filter(t=>t.project===p);
+      const pTotal = items.length;
+      const pDone = items.filter(t=>t.status==='done').length;
+      const pDoing = items.filter(t=>t.status==='doing').length;
+      const pTodo = items.filter(t=>t.status==='todo').length;
+      const pOverdue = items.filter(t=> t.status!=='done' && t.due < todayStr()).length;
+      return {
+        'Dự án': p,
+        'Tổng số công việc': pTotal,
+        'Chưa làm': pTodo,
+        'Đang làm': pDoing,
+        'Chậm deadline': pOverdue,
+        'Hoàn thành': pDone,
+        'Tỷ lệ hoàn thành': pTotal ? Math.round(pDone/pTotal*100)+'%' : '0%'
+      };
+    });
+    const wsProjectStatus = XLSX.utils.json_to_sheet(projectStatusRows);
+    wsProjectStatus['!cols'] = [{wch:24},{wch:16},{wch:12},{wch:12},{wch:14},{wch:12},{wch:16}];
+    XLSX.utils.book_append_sheet(wb, wsProjectStatus, 'Trạng thái theo dự án');
+
     const allSorted = [...tasks].sort((a,b)=> a.due.localeCompare(b.due));
     const wsAll = XLSX.utils.json_to_sheet(allSorted.map(taskRow));
-    wsAll['!cols'] = [{wch:32},{wch:18},{wch:12},{wch:14},{wch:12},{wch:12},{wch:12},{wch:10}];
+    wsAll['!cols'] = [{wch:32},{wch:18},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
     XLSX.utils.book_append_sheet(wb, wsAll, 'Toàn bộ công việc');
+
+    // Sheet riêng cho các công việc đang chậm deadline, xếp theo mức độ trễ
+    const overdueRows = tasks
+      .filter(t=> t.status!=='done' && t.due < todayStr())
+      .sort((a,b)=> a.due.localeCompare(b.due))
+      .map(t=> ({...taskRow(t), 'Số ngày đã trễ': daysBetween(t.due, todayStr())}));
+    const wsOverdue = overdueRows.length
+      ? XLSX.utils.json_to_sheet(overdueRows)
+      : XLSX.utils.json_to_sheet([{'Ghi chú':'Không có công việc chậm deadline'}]);
+    wsOverdue['!cols'] = [{wch:32},{wch:18},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16},{wch:14}];
+    XLSX.utils.book_append_sheet(wb, wsOverdue, 'Chậm deadline');
 
     const statusGroups = [
       {key:'todo', name:'Chưa làm'},
@@ -893,7 +948,7 @@ for delete using (true);`;
         .sort((a,b)=> a.due.localeCompare(b.due))
         .map(taskRow);
       const ws = rows.length ? XLSX.utils.json_to_sheet(rows) : XLSX.utils.json_to_sheet([{'Ghi chú':'Không có công việc'}]);
-      ws['!cols'] = [{wch:32},{wch:18},{wch:12},{wch:14},{wch:12},{wch:12},{wch:12},{wch:10}];
+      ws['!cols'] = [{wch:32},{wch:18},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
       XLSX.utils.book_append_sheet(wb, ws, g.name);
     });
 
@@ -903,7 +958,7 @@ for delete using (true);`;
         .map(taskRow);
       const safeName = p.replace(/[\\\/\?\*\[\]:]/g,'').slice(0,28) || 'Dự án';
       const ws = XLSX.utils.json_to_sheet(rows);
-      ws['!cols'] = [{wch:32},{wch:18},{wch:12},{wch:14},{wch:12},{wch:12},{wch:12},{wch:10}];
+      ws['!cols'] = [{wch:32},{wch:18},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
       XLSX.utils.book_append_sheet(wb, ws, safeName);
     });
 
