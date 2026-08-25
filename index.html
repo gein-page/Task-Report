@@ -568,7 +568,7 @@
       <table class="tasklist">
         <thead><tr>
           <th>Công việc</th><th>Dự án</th><th>Bắt đầu</th><th>Hạn</th>
-          <th>Ưu tiên</th><th>Trạng thái</th><th>Tiến độ</th><th></th>
+          <th>Ưu tiên</th><th>Trạng thái</th><th></th>
         </tr></thead>
         <tbody>
           ${sorted.map(t=>{
@@ -583,7 +583,6 @@
               <td style="color:${overdue?'var(--red)':'inherit'};font-weight:${overdue?'600':'400'};">${fmtDate(t.due)}${overdue?' ⚠':''}</td>
               <td>${prLabel}</td>
               <td><span class="status-pill status-${t.status}">${stLabel}</span></td>
-              <td><div class="row-progress"><div class="bar-track"><div class="bar-fill" style="width:${t.progress}%"></div></div><span style="font-family:'IBM Plex Mono';font-size:11px;">${t.progress}%</span></div></td>
               <td><button class="icon-btn" data-id="${t.id}" title="Sửa">✎</button></td>
             </tr>`;
           }).join('')}
