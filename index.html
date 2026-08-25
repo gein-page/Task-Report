@@ -230,8 +230,11 @@
   .modal{
     background:var(--paper-raised);border-radius:14px;width:100%;max-width:460px;
     padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25);
+    max-height:90vh;overflow-y:auto;transition:max-width .15s ease;
   }
+  .modal.wide{max-width:640px;}
   .modal h3{font-family:'Space Grotesk';margin:0 0 16px;font-size:19px;}
+  .modal-body{display:flex;flex-direction:column;}
   .field{margin-bottom:13px;}
   .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-weight:500;}
   .field input, .field select, .field textarea{
@@ -252,6 +255,57 @@
     cursor:pointer;font-size:13px;font-weight:600;
   }
   .btn-primary:disabled{opacity:.55;cursor:not-allowed;}
+
+  /* ===== Modal extra: subtasks / comments / activity (chỉ hiện khi bấm vào task) ===== */
+  .modal-extra{margin-top:6px;padding-top:16px;border-top:1px solid var(--line);
+    display:flex;flex-direction:column;gap:20px;}
+  .extra-section h4{
+    font-family:'IBM Plex Mono';font-size:11px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--ink-soft);margin:0 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  }
+  .extra-section h4 .count{
+    background:var(--grey-chip);color:var(--ink);border-radius:999px;padding:1px 8px;
+    font-size:10.5px;font-family:'IBM Plex Sans';font-weight:600;
+  }
+  .extra-section h4 .hint-tag{
+    font-family:'IBM Plex Sans';font-size:10.5px;text-transform:none;letter-spacing:0;
+    color:var(--ink-soft);font-weight:400;
+  }
+  .empty-hint{font-size:12px;color:var(--ink-soft);padding:6px 0;}
+
+  .subtask-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);}
+  .subtask-row:last-child{border-bottom:none;}
+  .subtask-check{display:flex;align-items:center;gap:8px;flex:1;font-size:13px;cursor:pointer;min-width:0;}
+  .subtask-check input{width:auto;}
+  .subtask-check span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .subtask-row.done .subtask-check span{text-decoration:line-through;color:var(--ink-soft);}
+  .subtask-due{width:128px;flex-shrink:0;font-size:12px;padding:5px 7px;}
+  .subtask-del{color:var(--red);flex-shrink:0;}
+  .subtask-add-row{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap;}
+  .subtask-add-row input[type="text"]{flex:1;min-width:140px;}
+  .subtask-add-row input[type="date"]{width:128px;}
+  .subtask-add-row button{
+    font-family:'IBM Plex Sans';font-weight:600;font-size:12.5px;background:var(--ink);color:#fff;
+    border:none;padding:0 13px;border-radius:8px;cursor:pointer;white-space:nowrap;
+  }
+
+  .comment-list{max-height:180px;overflow-y:auto;}
+  .comment-row{padding:8px 0;border-bottom:1px solid var(--line);}
+  .comment-row:last-child{border-bottom:none;}
+  .comment-text{font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word;}
+  .comment-time{font-family:'IBM Plex Mono';font-size:10.5px;color:var(--ink-soft);margin-top:3px;}
+  .comment-add-row{display:flex;gap:7px;margin-top:9px;align-items:flex-start;}
+  .comment-add-row textarea{flex:1;min-height:44px;}
+  .comment-add-row button{
+    font-family:'IBM Plex Sans';font-weight:600;font-size:12.5px;background:var(--accent);color:#fff;
+    border:none;padding:0 15px;height:38px;border-radius:8px;cursor:pointer;white-space:nowrap;flex-shrink:0;
+  }
+
+  .activity-log{max-height:170px;overflow-y:auto;}
+  .activity-row{display:flex;gap:9px;padding:6px 0;}
+  .activity-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:6px;flex-shrink:0;}
+  .activity-text{font-size:12.5px;line-height:1.4;}
+  .activity-time{font-family:'IBM Plex Mono';font-size:10.5px;color:var(--ink-soft);margin-top:2px;}
 
   .note{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
   .footer-note{
@@ -283,6 +337,7 @@
     .board{grid-template-columns:1fr;}
     table.tasklist{font-size:12px;}
     .field-row{flex-direction:column;}
+    .modal.wide{max-width:100%;}
   }
 </style>
 </head>
@@ -327,46 +382,78 @@
 
 <!-- Modal -->
 <div class="overlay" id="overlay">
-  <div class="modal">
+  <div class="modal" id="modalBox">
     <h3 id="modalTitle">Thêm công việc</h3>
-    <div class="field">
-      <label>Tên công việc</label>
-      <input type="text" id="f-title" placeholder="VD: Thiết kế bộ nhận diện thương hiệu">
-    </div>
-    <div class="field">
-      <label>Dự án / Nhóm</label>
-      <input type="text" id="f-project" placeholder="VD: Dự án A">
-    </div>
-    <div class="field">
-      <label>Mô tả nội dung</label>
-      <textarea id="f-desc" rows="3" placeholder="Mô tả chi tiết công việc cần làm..."></textarea>
-    </div>
-    <div class="field-row">
+    <div class="modal-body">
       <div class="field">
-        <label>Ngày bắt đầu</label>
-        <input type="date" id="f-start">
+        <label>Tên công việc</label>
+        <input type="text" id="f-title" placeholder="VD: Thiết kế bộ nhận diện thương hiệu">
       </div>
       <div class="field">
-        <label>Hạn hoàn thành</label>
-        <input type="date" id="f-due">
-      </div>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Mức ưu tiên</label>
-        <select id="f-priority">
-          <option value="low">Thấp</option>
-          <option value="med" selected>Trung bình</option>
-          <option value="high">Cao</option>
-        </select>
+        <label>Dự án / Nhóm</label>
+        <input type="text" id="f-project" placeholder="VD: Dự án A">
       </div>
       <div class="field">
-        <label>Trạng thái</label>
-        <select id="f-status">
-          <option value="todo">Chưa làm</option>
-          <option value="doing" selected>Đang làm</option>
-          <option value="done">Hoàn thành</option>
-        </select>
+        <label>Mô tả nội dung</label>
+        <textarea id="f-desc" rows="3" placeholder="Mô tả chi tiết công việc cần làm..."></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Ngày bắt đầu</label>
+          <input type="date" id="f-start">
+        </div>
+        <div class="field">
+          <label>Hạn hoàn thành</label>
+          <input type="date" id="f-due">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Mức ưu tiên</label>
+          <select id="f-priority">
+            <option value="low">Thấp</option>
+            <option value="med" selected>Trung bình</option>
+            <option value="high">Cao</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Trạng thái</label>
+          <select id="f-status">
+            <option value="todo">Chưa làm</option>
+            <option value="doing" selected>Đang làm</option>
+            <option value="done">Hoàn thành</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Các phần dưới đây CHỈ hiện khi mở một công việc đã tồn tại (bấm vào task) -->
+      <div class="modal-extra" id="modalExtra" style="display:none;">
+
+        <div class="extra-section">
+          <h4>Công việc con <span class="count" id="subtaskCount"></span></h4>
+          <div id="subtaskList"></div>
+          <div class="subtask-add-row">
+            <input type="text" id="newSubtaskTitle" placeholder="Tên công việc con">
+            <input type="date" id="newSubtaskDue">
+            <button type="button" id="addSubtaskBtn">+ Thêm</button>
+          </div>
+          <div class="note">Hạn công việc chính sẽ tự động dời ra nếu công việc con có hạn muộn hơn.</div>
+        </div>
+
+        <div class="extra-section">
+          <h4>Bình luận</h4>
+          <div id="commentList" class="comment-list"></div>
+          <div class="comment-add-row">
+            <textarea id="newCommentText" placeholder="Viết bình luận..."></textarea>
+            <button type="button" id="addCommentBtn">Gửi</button>
+          </div>
+        </div>
+
+        <div class="extra-section">
+          <h4>Lịch sử chỉnh sửa <span class="hint-tag">— tự động ghi nhận theo thời gian thực, không thể chỉnh sửa</span></h4>
+          <div id="activityList" class="activity-log"></div>
+        </div>
+
       </div>
     </div>
     <div class="modal-actions">
@@ -405,6 +492,12 @@ for update using (true);
 create policy "Cho phép xoá" on tasks
 for delete using (true);`;
 
+  // SQL gợi ý để thêm các cột mới phục vụ Công việc con / Bình luận / Lịch sử chỉnh sửa
+  const SCHEMA_FIX_SQL =
+`alter table tasks add column if not exists subtasks jsonb not null default '[]'::jsonb;
+alter table tasks add column if not exists comments jsonb not null default '[]'::jsonb;
+alter table tasks add column if not exists activity jsonb not null default '[]'::jsonb;`;
+
   const PROJECT_COLORS = ['#3457D5','#C9840A','#2F7D5C','#8E4EC6','#C13F3F','#0E7C86','#A6570E'];
   let tasks = [];
   let currentView = 'runway';
@@ -414,8 +507,14 @@ for delete using (true);`;
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
   function fmtDate(d){
+    if(!d) return '—';
     return new Date(d+'T00:00:00').toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'});
   }
+  function fmtDateTime(iso){
+    if(!iso) return '';
+    return new Date(iso).toLocaleString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  }
+  function nowISO(){ return new Date().toISOString(); }
   function todayStr(){
     const d = new Date();
     return d.toISOString().slice(0,10);
@@ -465,11 +564,33 @@ for delete using (true);`;
     );
   }
 
+  // Nhận diện lỗi thiếu cột (subtasks / comments / activity) và hiển thị hướng dẫn sửa
+  function isMissingColumnError(err){
+    const msg = (err && err.message) ? err.message.toLowerCase() : '';
+    return (msg.includes('column') && msg.includes('does not exist')) || err?.code === '42703';
+  }
+  function showSchemaBanner(){
+    showBanner('error',
+      `<strong>Thiếu cột dữ liệu cho Công việc con / Bình luận / Lịch sử chỉnh sửa.</strong>
+      Vào <strong>Supabase → SQL Editor</strong> và chạy đoạn SQL sau, rồi thử lại:
+      <pre>${escapeHtml(SCHEMA_FIX_SQL)}</pre>`,
+      true
+    );
+  }
+
   function rowToTask(r){
-    return {id:r.id, title:r.title, project:r.project, description:r.description || '', start:r.start_date, due:r.due_date, priority:r.priority, status:r.status};
+    return {
+      id:r.id, title:r.title, project:r.project, description:r.description || '',
+      start:r.start_date, due:r.due_date, priority:r.priority, status:r.status,
+      subtasks: r.subtasks || [], comments: r.comments || [], activity: r.activity || []
+    };
   }
   function taskToRow(t){
-    return {title:t.title, project:t.project, description:t.description || '', start_date:t.start, due_date:t.due, priority:t.priority, status:t.status};
+    return {
+      title:t.title, project:t.project, description:t.description || '',
+      start_date:t.start, due_date:t.due, priority:t.priority, status:t.status,
+      subtasks: t.subtasks || [], comments: t.comments || [], activity: t.activity || []
+    };
   }
 
   async function loadTasks(){
@@ -484,6 +605,8 @@ for delete using (true);`;
         tasks = [];
         if(isRlsError(e)){
           showRlsBanner();
+        } else if(isMissingColumnError(e)){
+          showSchemaBanner();
         } else {
           showBanner('error', 'Không kết nối được tới backend Supabase. Kiểm tra lại URL/Key, hoặc chắc chắn đã tạo bảng <code>tasks</code> đúng cấu trúc.', true);
         }
@@ -500,6 +623,7 @@ for delete using (true);`;
       const {data, error} = await db.from('tasks').insert(taskToRow(fields)).select().single();
       if(error){
         if(isRlsError(error)) showRlsBanner();
+        else if(isMissingColumnError(error)) showSchemaBanner();
         else alert('Lỗi khi lưu công việc: ' + error.message);
         return null;
       }
@@ -512,6 +636,7 @@ for delete using (true);`;
       const {error} = await db.from('tasks').update(taskToRow(fields)).eq('id', id);
       if(error){
         if(isRlsError(error)) showRlsBanner();
+        else if(isMissingColumnError(error)) showSchemaBanner();
         else alert('Lỗi khi cập nhật công việc: ' + error.message);
         return false;
       }
@@ -523,6 +648,7 @@ for delete using (true);`;
       const {error} = await db.from('tasks').delete().eq('id', id);
       if(error){
         if(isRlsError(error)) showRlsBanner();
+        else if(isMissingColumnError(error)) showSchemaBanner();
         else alert('Lỗi khi xoá công việc: ' + error.message);
         return false;
       }
@@ -530,16 +656,184 @@ for delete using (true);`;
     return true;
   }
 
+  // ---------- Công việc con / Bình luận / Lịch sử chỉnh sửa ----------
+  function addActivity(t, text){
+    t.activity = [...(t.activity||[]), {id:uid(), text, time: nowISO()}];
+  }
+
+  // Sub-task ảnh hưởng trực tiếp đến hạn của task chính: nếu công việc con có hạn muộn hơn
+  // hạn hiện tại của task chính, hạn task chính sẽ tự động dời ra (chỉ dời ra, không tự rút ngắn lại).
+  function syncTaskDueWithSubtasks(t){
+    const subDues = (t.subtasks||[]).map(s=>s.due).filter(Boolean);
+    if(subDues.length===0) return false;
+    const maxSubDue = subDues.reduce((m,d)=> d>m?d:m, subDues[0]);
+    if(maxSubDue > t.due){
+      const old = t.due;
+      t.due = maxSubDue;
+      addActivity(t, `Hạn hoàn thành tự động dời từ ${fmtDate(old)} sang ${fmtDate(maxSubDue)} do công việc con.`);
+      return true;
+    }
+    return false;
+  }
+
+  async function persistTaskExtra(t){
+    return await updateTaskRemote(t.id, t);
+  }
+
+  function renderModalExtra(t){
+    // --- Công việc con ---
+    const subs = t.subtasks || [];
+    const doneCount = subs.filter(s=>s.done).length;
+    $('#subtaskCount').textContent = subs.length ? `${doneCount}/${subs.length}` : '';
+    $('#subtaskList').innerHTML = subs.length ? subs.map(s=>`
+      <div class="subtask-row ${s.done?'done':''}">
+        <label class="subtask-check">
+          <input type="checkbox" data-sub="${s.id}" ${s.done?'checked':''}>
+          <span>${escapeHtml(s.title)}</span>
+        </label>
+        <input type="date" class="subtask-due" data-sub-due="${s.id}" value="${s.due||''}">
+        <button type="button" class="icon-btn subtask-del" data-sub-del="${s.id}" title="Xoá công việc con">✕</button>
+      </div>
+    `).join('') : `<div class="empty-hint">Chưa có công việc con.</div>`;
+
+    $$('#subtaskList input[type="checkbox"]').forEach(cb=>{
+      cb.addEventListener('change', ()=> toggleSubtaskDone(cb.dataset.sub));
+    });
+    $$('#subtaskList .subtask-due').forEach(inp=>{
+      inp.addEventListener('change', ()=> updateSubtaskDue(inp.dataset.subDue, inp.value));
+    });
+    $$('#subtaskList .subtask-del').forEach(btn=>{
+      btn.addEventListener('click', ()=> deleteSubtask(btn.dataset.subDel));
+    });
+
+    // --- Bình luận (mới nhất trước) ---
+    const comments = [...(t.comments||[])].sort((a,b)=> b.time.localeCompare(a.time));
+    $('#commentList').innerHTML = comments.length ? comments.map(c=>`
+      <div class="comment-row">
+        <div class="comment-text">${escapeHtml(c.text)}</div>
+        <div class="comment-time">${fmtDateTime(c.time)}</div>
+      </div>
+    `).join('') : `<div class="empty-hint">Chưa có bình luận nào.</div>`;
+
+    // --- Lịch sử chỉnh sửa (chỉ đọc, tự động ghi nhận, mới nhất trước) ---
+    const activity = [...(t.activity||[])].sort((a,b)=> b.time.localeCompare(a.time));
+    $('#activityList').innerHTML = activity.length ? activity.map(a=>`
+      <div class="activity-row">
+        <span class="activity-dot"></span>
+        <div>
+          <div class="activity-text">${escapeHtml(a.text)}</div>
+          <div class="activity-time">${fmtDateTime(a.time)}</div>
+        </div>
+      </div>
+    `).join('') : `<div class="empty-hint">Chưa có hoạt động nào.</div>`;
+  }
+
+  async function handleAddSubtask(){
+    const t = tasks.find(x=>x.id===editingId);
+    if(!t) return;
+    const titleInput = $('#newSubtaskTitle');
+    const dueInput = $('#newSubtaskDue');
+    const title = titleInput.value.trim();
+    if(!title){ titleInput.focus(); return; }
+    const due = dueInput.value || '';
+    const sub = {id:uid(), title, due, done:false};
+    t.subtasks = [...(t.subtasks||[]), sub];
+    addActivity(t, `Thêm công việc con "${title}"${due?` (hạn ${fmtDate(due)})`:''}.`);
+    const extended = syncTaskDueWithSubtasks(t);
+    const ok = await persistTaskExtra(t);
+    if(ok){
+      titleInput.value=''; dueInput.value='';
+      renderModalExtra(t);
+      if(extended) $('#f-due').value = t.due;
+      render();
+    }
+  }
+
+  async function toggleSubtaskDone(subId){
+    const t = tasks.find(x=>x.id===editingId);
+    if(!t) return;
+    const s = (t.subtasks||[]).find(x=>x.id===subId);
+    if(!s) return;
+    s.done = !s.done;
+    addActivity(t, `${s.done?'Hoàn thành':'Bỏ đánh dấu hoàn thành'} công việc con "${s.title}".`);
+    const ok = await persistTaskExtra(t);
+    if(ok) renderModalExtra(t);
+  }
+
+  async function updateSubtaskDue(subId, newDue){
+    const t = tasks.find(x=>x.id===editingId);
+    if(!t) return;
+    const s = (t.subtasks||[]).find(x=>x.id===subId);
+    if(!s) return;
+    const old = s.due;
+    s.due = newDue;
+    addActivity(t, `Đổi hạn công việc con "${s.title}": ${old?fmtDate(old):'—'} → ${newDue?fmtDate(newDue):'—'}.`);
+    const extended = syncTaskDueWithSubtasks(t);
+    const ok = await persistTaskExtra(t);
+    if(ok){
+      renderModalExtra(t);
+      if(extended) $('#f-due').value = t.due;
+      render();
+    }
+  }
+
+  async function deleteSubtask(subId){
+    const t = tasks.find(x=>x.id===editingId);
+    if(!t) return;
+    const s = (t.subtasks||[]).find(x=>x.id===subId);
+    t.subtasks = (t.subtasks||[]).filter(x=>x.id!==subId);
+    if(s) addActivity(t, `Xoá công việc con "${s.title}".`);
+    const ok = await persistTaskExtra(t);
+    if(ok) renderModalExtra(t);
+  }
+
+  async function handleAddComment(){
+    const t = tasks.find(x=>x.id===editingId);
+    if(!t) return;
+    const input = $('#newCommentText');
+    const text = input.value.trim();
+    if(!text){ input.focus(); return; }
+    const c = {id:uid(), text, time: nowISO()};
+    t.comments = [...(t.comments||[]), c];
+    addActivity(t, `Đã thêm bình luận.`);
+    const ok = await persistTaskExtra(t);
+    if(ok){
+      input.value='';
+      renderModalExtra(t);
+    }
+  }
+
+  function diffActivity(oldT, newFields){
+    const notes = [];
+    if(oldT.title !== newFields.title) notes.push(`Đổi tên công việc thành "${newFields.title}".`);
+    if(oldT.project !== newFields.project) notes.push(`Đổi dự án: ${oldT.project} → ${newFields.project}.`);
+    if(oldT.start !== newFields.start) notes.push(`Đổi ngày bắt đầu: ${fmtDate(oldT.start)} → ${fmtDate(newFields.start)}.`);
+    if(oldT.due !== newFields.due) notes.push(`Đổi hạn hoàn thành: ${fmtDate(oldT.due)} → ${fmtDate(newFields.due)}.`);
+    if(oldT.priority !== newFields.priority) notes.push(`Đổi mức ưu tiên: ${priorityLabel(oldT.priority)} → ${priorityLabel(newFields.priority)}.`);
+    if(oldT.status !== newFields.status) notes.push(`Đổi trạng thái: ${statusLabel(oldT.status)} → ${statusLabel(newFields.status)}.`);
+    return notes;
+  }
+
   function seedTasks(){
-    const t = todayStr();
     const off = (n) => { const d=new Date(); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
-    return [
-      {id:uid(), title:'Xây dựng bộ nhận diện thương hiệu', project:'Sản phẩm mới', description:'Thiết kế logo, bảng màu và font chữ cho thương hiệu mới.', start:off(-2), due:off(4), priority:'high', status:'doing'},
-      {id:uid(), title:'Thiết kế bài đăng mạng xã hội tuần', project:'Social Media', description:'', start:off(0), due:off(2), priority:'med', status:'todo'},
-      {id:uid(), title:'In ấn brochure sự kiện', project:'Print', description:'', start:off(-5), due:off(-1), priority:'high', status:'doing'},
-      {id:uid(), title:'Tái định vị thương hiệu sản phẩm', project:'Repositioning', description:'', start:off(1), due:off(9), priority:'med', status:'todo'},
-      {id:uid(), title:'Duyệt bản in danh thiếp', project:'Print', description:'', start:off(-6), due:off(-3), priority:'low', status:'done'},
+    const mkActivity = () => [{id:uid(), text:'Đã tạo công việc.', time: nowISO()}];
+    const list = [
+      {id:uid(), title:'Xây dựng bộ nhận diện thương hiệu', project:'Sản phẩm mới', description:'Thiết kế logo, bảng màu và font chữ cho thương hiệu mới.', start:off(-2), due:off(4), priority:'high', status:'doing',
+        subtasks:[
+          {id:uid(), title:'Phác thảo logo', due:off(1), done:true},
+          {id:uid(), title:'Chọn bảng màu & font chữ', due:off(3), done:false},
+          {id:uid(), title:'Bộ quy chuẩn thương hiệu (Brand Guideline)', due:off(6), done:false}
+        ],
+        comments:[{id:uid(), text:'Khách hàng muốn xem thêm 2 phương án logo nữa.', time:new Date(Date.now()-3*3600e3).toISOString()}],
+        activity: mkActivity()
+      },
+      {id:uid(), title:'Thiết kế bài đăng mạng xã hội tuần', project:'Social Media', description:'', start:off(0), due:off(2), priority:'med', status:'todo', subtasks:[], comments:[], activity: mkActivity()},
+      {id:uid(), title:'In ấn brochure sự kiện', project:'Print', description:'', start:off(-5), due:off(-1), priority:'high', status:'doing', subtasks:[], comments:[], activity: mkActivity()},
+      {id:uid(), title:'Tái định vị thương hiệu sản phẩm', project:'Repositioning', description:'', start:off(1), due:off(9), priority:'med', status:'todo', subtasks:[], comments:[], activity: mkActivity()},
+      {id:uid(), title:'Duyệt bản in danh thiếp', project:'Print', description:'', start:off(-6), due:off(-3), priority:'low', status:'done', subtasks:[], comments:[], activity: mkActivity()},
     ];
+    list.forEach(t=> syncTaskDueWithSubtasks(t));
+    return list;
   }
 
   // ---------- Stats ----------
@@ -757,6 +1051,7 @@ for delete using (true);`;
         if(draggedEl) draggedEl.dataset.justDragged = '1';
         const prevStatus = t.status;
         t.status = targetStatus;
+        addActivity(t, `Đổi trạng thái: ${statusLabel(prevStatus)} → ${statusLabel(targetStatus)}.`);
         render();
         const ok = await updateTaskRemote(id, t);
         if(!ok){ t.status = prevStatus; render(); }
@@ -814,6 +1109,21 @@ for delete using (true);`;
     $('#f-priority').value = t ? t.priority : 'med';
     $('#f-status').value = t ? t.status : 'todo';
     $('#deleteBtn').style.display = t ? 'inline-block' : 'none';
+
+    const extra = $('#modalExtra');
+    const modalBox = $('#modalBox');
+    $('#newSubtaskTitle').value = '';
+    $('#newSubtaskDue').value = '';
+    $('#newCommentText').value = '';
+    if(t){
+      extra.style.display = 'flex';
+      modalBox.classList.add('wide');
+      renderModalExtra(t);
+    } else {
+      extra.style.display = 'none';
+      modalBox.classList.remove('wide');
+    }
+
     $('#overlay').classList.add('open');
     $('#f-title').focus();
   }
@@ -838,12 +1148,18 @@ for delete using (true);`;
     saveBtn.disabled = true;
     try{
       if(editingId){
-        const ok = await updateTaskRemote(editingId, fields);
-        if(!ok) return;
         const t = tasks.find(x=>x.id===editingId);
-        if(t) Object.assign(t, fields);
+        if(!t) return;
+        const notes = diffActivity(t, fields);
+        const updatedActivity = [...(t.activity||[])];
+        notes.forEach(n => updatedActivity.push({id:uid(), text:n, time: nowISO()}));
+        const fullFields = {...fields, subtasks: t.subtasks||[], comments: t.comments||[], activity: updatedActivity};
+        const ok = await updateTaskRemote(editingId, fullFields);
+        if(!ok) return;
+        Object.assign(t, fields, {activity: updatedActivity});
       } else {
-        const newTask = await addTaskRemote(fields);
+        const fields2 = {...fields, subtasks:[], comments:[], activity:[{id:uid(), text:'Đã tạo công việc.', time: nowISO()}]};
+        const newTask = await addTaskRemote(fields2);
         if(!newTask) return;
         tasks.push(newTask);
       }
@@ -940,6 +1256,25 @@ for delete using (true);`;
     wsAll['!cols'] = [{wch:32},{wch:18},{wch:34},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
     XLSX.utils.book_append_sheet(wb, wsAll, 'Toàn bộ công việc');
 
+    // Sheet riêng cho Công việc con (phần duy nhất trong các phần mới được đưa vào Excel)
+    const subtaskRows = [];
+    tasks.forEach(t=>{
+      (t.subtasks||[]).forEach(s=>{
+        subtaskRows.push({
+          'Công việc cha': t.title,
+          'Dự án': t.project,
+          'Tên công việc con': s.title,
+          'Hạn công việc con': s.due || '',
+          'Trạng thái': s.done ? 'Hoàn thành' : 'Chưa xong'
+        });
+      });
+    });
+    const wsSubtasks = subtaskRows.length
+      ? XLSX.utils.json_to_sheet(subtaskRows)
+      : XLSX.utils.json_to_sheet([{'Ghi chú':'Không có công việc con nào'}]);
+    wsSubtasks['!cols'] = [{wch:32},{wch:18},{wch:32},{wch:16},{wch:14}];
+    XLSX.utils.book_append_sheet(wb, wsSubtasks, 'Công việc con');
+
     // Sheet riêng cho các công việc đang chậm deadline, xếp theo mức độ trễ
     const overdueRows = tasks
       .filter(t=> t.status!=='done' && t.due < todayStr())
@@ -988,6 +1323,9 @@ for delete using (true);`;
   $('#overlay').addEventListener('click', (e)=>{ if(e.target.id==='overlay') closeModal(); });
   $('#filterProject').addEventListener('change', render);
   $('#filterStatus').addEventListener('change', render);
+  $('#addSubtaskBtn').addEventListener('click', handleAddSubtask);
+  $('#newSubtaskTitle').addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); handleAddSubtask(); } });
+  $('#addCommentBtn').addEventListener('click', handleAddComment);
   $$('.tab').forEach(tab=>{
     tab.addEventListener('click', ()=>{
       $$('.tab').forEach(x=>x.classList.remove('active'));
