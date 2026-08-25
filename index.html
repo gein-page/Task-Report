@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -310,6 +311,114 @@
   .activity-text{font-size:12.5px;line-height:1.4;}
   .activity-time{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-soft);margin-top:4px;}
 
+  /* ===== Calendar date picker (dd/mm/yy) ===== */
+  .date-wrap{position:relative;display:block;}
+  .date-wrap input.date-text{width:100%;padding-right:34px;}
+  .date-wrap .dp-btn{
+    position:absolute;right:4px;top:50%;transform:translateY(-50%);
+    background:none;border:none;cursor:pointer;font-size:14px;line-height:1;
+    padding:5px 6px;border-radius:6px;color:var(--ink-soft);
+  }
+  .date-wrap .dp-btn:hover{background:var(--grey-chip);color:var(--accent);}
+  .subtask-row .date-wrap,.subtask-add-row .date-wrap{width:128px;flex-shrink:0;}
+  .subtask-row .date-wrap input.date-text,
+  .subtask-add-row .date-wrap input.date-text{width:100%;}
+
+  .dp-pop{
+    position:fixed;z-index:120;display:none;width:292px;
+    background:var(--paper-raised);border:1px solid var(--line);border-radius:12px;
+    box-shadow:0 12px 36px rgba(32,35,43,.20);padding:12px;
+    font-family:var(--font-main);
+  }
+  .dp-pop.open{display:block;}
+  .dp-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  .dp-nav{
+    background:none;border:1px solid var(--line);border-radius:7px;cursor:pointer;
+    width:28px;height:28px;font-size:15px;line-height:1;color:var(--ink-soft);flex-shrink:0;
+  }
+  .dp-nav:hover{background:var(--grey-chip);color:var(--ink);}
+  .dp-title{flex:1;display:flex;gap:6px;min-width:0;}
+  .dp-title select{
+    min-width:0;font-family:var(--font-main);font-size:12.5px;font-weight:600;
+    padding:6px 20px 6px 8px;border:1px solid var(--line);border-radius:7px;
+    background:var(--paper);color:var(--ink);cursor:pointer;height:30px;
+    -webkit-appearance:none;-moz-appearance:none;appearance:none;
+    background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235B5F6B' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 7px center;
+  }
+  .dp-title select:hover{border-color:var(--accent);background-color:var(--accent-soft);}
+  .dp-title select:focus{outline:none;border-color:var(--accent);}
+  .dp-title .dp-month{flex:1.7;}
+  .dp-title .dp-year{flex:1;}
+  .dp-dow,.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+  .dp-dow div{
+    text-align:center;font-family:var(--font-mono);font-size:10px;color:var(--ink-soft);
+    text-transform:uppercase;letter-spacing:.04em;padding:4px 0 6px;
+  }
+  .dp-day{
+    height:30px;border:none;background:none;border-radius:7px;cursor:pointer;
+    font-family:var(--font-main);font-size:12.5px;color:var(--ink);
+  }
+  .dp-day:hover{background:var(--accent-soft);color:var(--accent);}
+  .dp-day.muted{color:#B6B4AA;}
+  .dp-day.weekend{color:var(--red);}
+  .dp-day.weekend.muted{color:#E0B7B7;}
+  .dp-day.today{box-shadow:inset 0 0 0 1px var(--accent);font-weight:600;}
+  .dp-day.picked{background:var(--accent);color:#fff;font-weight:600;}
+  .dp-day.picked:hover{background:var(--accent);color:#fff;}
+  .dp-quick{
+    display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);
+    flex-wrap:wrap;
+  }
+  .dp-quick button{
+    flex:1;min-width:52px;font-family:var(--font-main);font-size:11.5px;font-weight:500;
+    padding:6px 4px;border:1px solid var(--line);border-radius:7px;background:var(--paper);
+    color:var(--ink-soft);cursor:pointer;white-space:nowrap;
+  }
+  .dp-quick button:hover{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);}
+  .dp-quick button[data-quick="clear"]:hover{background:var(--red-soft);color:var(--red);border-color:var(--red);}
+
+  /* ===== Bulk select on the board ===== */
+  .col-select{
+    display:flex;align-items:center;gap:6px;font-family:var(--font-main);font-size:10.5px;
+    text-transform:none;letter-spacing:0;color:var(--ink-soft);cursor:pointer;user-select:none;
+  }
+  .col-select input{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;margin:0;}
+  .board-col h4 .h4-right{display:flex;align-items:center;gap:10px;}
+  .card{position:relative;}
+  .card .c-check{
+    position:absolute;top:10px;right:10px;width:15px;height:15px;margin:0;
+    accent-color:var(--accent);cursor:pointer;z-index:2;
+  }
+  .card .c-title{padding-right:24px;}
+  .card.selected{outline:2px solid var(--accent);outline-offset:1px;}
+  .card.bulk-ghost{opacity:.4;}
+
+  .bulk-bar{
+    position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(16px);
+    background:var(--ink);color:#fff;border-radius:12px;padding:10px 12px;
+    display:none;align-items:center;gap:10px;z-index:60;flex-wrap:wrap;
+    box-shadow:0 12px 32px rgba(32,35,43,.32);opacity:0;transition:opacity .15s,transform .15s;
+    max-width:calc(100vw - 32px);
+  }
+  .bulk-bar.open{display:flex;opacity:1;transform:translateX(-50%) translateY(0);}
+  .bulk-bar .bulk-count{font-size:13px;font-weight:600;padding:0 4px;white-space:nowrap;}
+  .bulk-bar select{
+    font-family:var(--font-main);font-size:12.5px;padding:8px 10px;border-radius:8px;
+    border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.10);color:#fff;cursor:pointer;
+  }
+  .bulk-bar select option{color:var(--ink);}
+  .bulk-bar button{
+    font-family:var(--font-main);font-size:12.5px;font-weight:600;padding:8px 12px;
+    border-radius:8px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.10);
+    color:#fff;cursor:pointer;white-space:nowrap;
+  }
+  .bulk-bar button:hover{background:rgba(255,255,255,.20);}
+  .bulk-bar button.danger{background:var(--red);border-color:var(--red);}
+  .bulk-bar button.danger:hover{filter:brightness(1.1);}
+  .bulk-bar button:disabled{opacity:.5;cursor:not-allowed;}
+  .bulk-bar .sep{width:1px;height:22px;background:rgba(255,255,255,.2);}
+
   .note{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
   .footer-note{
     text-align:center;color:var(--ink-soft);font-size:11.5px;margin-top:32px;
@@ -381,6 +490,21 @@
 
   <div id="viewRoot"></div>
 
+</div>
+
+<!-- Bulk action bar (Kanban multi-select) -->
+<div class="bulk-bar" id="bulkBar">
+  <span class="bulk-count" id="bulkCount">0 selected</span>
+  <span class="sep"></span>
+  <select id="bulkMoveTo">
+    <option value="">Move to…</option>
+    <option value="todo">To Do</option>
+    <option value="doing">In Progress</option>
+    <option value="done">Done</option>
+  </select>
+  <button type="button" class="danger" id="bulkDelete">🗑 Delete</button>
+  <span class="sep"></span>
+  <button type="button" id="bulkClear">Clear</button>
 </div>
 
 <!-- Modal -->
@@ -505,6 +629,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
   let tasks = [];
   let currentView = 'runway';
   let editingId = null;
+  let selectedIds = new Set();   // multi-selected card ids on the Kanban board
 
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -555,6 +680,205 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
       el.value = out;
     });
   }
+  // ---------- Calendar date picker ----------
+  // Keeps the visible value in dd/mm/yy but lets the user pick from a calendar grid
+  // instead of typing. Typing still works (attachDateAutoFormat stays attached).
+  const DP_MONTHS = ['January','February','March','April','May','June',
+                     'July','August','September','October','November','December'];
+  const DP_DOW = ['Mo','Tu','We','Th','Fr','Sa','Su'];
+  let dpInput = null;              // input currently being edited
+  let dpViewY = 0, dpViewM = 0;    // month being displayed
+  let dpPop = null;
+
+  function isoFromDate(d){
+    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  }
+  function offsetISO(n){
+    const d = new Date(); d.setDate(d.getDate()+n); return isoFromDate(d);
+  }
+
+  function buildDatePicker(){
+    if(dpPop) return dpPop;
+    dpPop = document.createElement('div');
+    dpPop.className = 'dp-pop';
+    dpPop.innerHTML = `
+      <div class="dp-head">
+        <button type="button" class="dp-nav" data-nav="-1" title="Previous month">‹</button>
+        <div class="dp-title">
+          <select class="dp-month">${DP_MONTHS.map((m,i)=>`<option value="${i}">${m}</option>`).join('')}</select>
+          <select class="dp-year"></select>
+        </div>
+        <button type="button" class="dp-nav" data-nav="1" title="Next month">›</button>
+      </div>
+      <div class="dp-dow">${DP_DOW.map(d=>`<div>${d}</div>`).join('')}</div>
+      <div class="dp-grid"></div>
+      <div class="dp-quick">
+        <button type="button" data-quick="0">Today</button>
+        <button type="button" data-quick="1">Tomorrow</button>
+        <button type="button" data-quick="7">+7d</button>
+        <button type="button" data-quick="clear">Clear</button>
+      </div>`;
+    document.body.appendChild(dpPop);
+
+    const yearSel = dpPop.querySelector('.dp-year');
+    const nowY = new Date().getFullYear();
+    let years = '';
+    for(let y = nowY - 5; y <= nowY + 10; y++) years += `<option value="${y}">${y}</option>`;
+    yearSel.innerHTML = years;
+
+    dpPop.querySelectorAll('.dp-nav').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        dpViewM += parseInt(btn.dataset.nav,10);
+        if(dpViewM < 0){ dpViewM = 11; dpViewY--; }
+        if(dpViewM > 11){ dpViewM = 0; dpViewY++; }
+        renderDpGrid();
+      });
+    });
+    dpPop.querySelector('.dp-month').addEventListener('change', e=>{
+      dpViewM = parseInt(e.target.value,10); renderDpGrid();
+    });
+    yearSel.addEventListener('change', e=>{
+      dpViewY = parseInt(e.target.value,10); renderDpGrid();
+    });
+    dpPop.querySelector('.dp-grid').addEventListener('click', e=>{
+      const cell = e.target.closest('.dp-day');
+      if(!cell) return;
+      applyDpValue(cell.dataset.date);
+    });
+    dpPop.querySelector('.dp-quick').addEventListener('click', e=>{
+      const btn = e.target.closest('button[data-quick]');
+      if(!btn) return;
+      const q = btn.dataset.quick;
+      applyDpValue(q === 'clear' ? '' : offsetISO(parseInt(q,10)));
+    });
+    // Keep focus on the input when clicking inside the popup, but let native form
+    // controls (the month/year selects) handle their own mousedown so their
+    // dropdown can actually open.
+    dpPop.addEventListener('mousedown', e=>{
+      if(e.target.closest('select')) return;
+      e.preventDefault();
+    });
+    return dpPop;
+  }
+
+  function applyDpValue(iso){
+    if(!dpInput) return;
+    dpInput.value = iso ? fmtDate(iso) : '';
+    dpInput.dispatchEvent(new Event('change', {bubbles:true}));
+    closeDatePicker();
+  }
+
+  function renderDpGrid(){
+    const grid = dpPop.querySelector('.dp-grid');
+    dpPop.querySelector('.dp-month').value = String(dpViewM);
+    const yearSel = dpPop.querySelector('.dp-year');
+    if(!Array.from(yearSel.options).some(o=>o.value === String(dpViewY))){
+      const opt = document.createElement('option');
+      opt.value = String(dpViewY); opt.textContent = String(dpViewY);
+      yearSel.appendChild(opt);
+      Array.from(yearSel.options)
+        .sort((a,b)=> Number(a.value)-Number(b.value))
+        .forEach(o=> yearSel.appendChild(o));
+    }
+    yearSel.value = String(dpViewY);
+
+    const picked = dpInput ? parseDMY(dpInput.value) : '';
+    const today = todayStr();
+    const first = new Date(dpViewY, dpViewM, 1);
+    // Monday-first offset
+    const lead = (first.getDay() + 6) % 7;
+    const cursor = new Date(dpViewY, dpViewM, 1 - lead);
+
+    let html = '';
+    for(let i=0;i<42;i++){
+      const iso = isoFromDate(cursor);
+      const inMonth = cursor.getMonth() === dpViewM;
+      const dow = cursor.getDay();
+      const cls = [
+        'dp-day',
+        inMonth ? '' : 'muted',
+        (dow===0 || dow===6) ? 'weekend' : '',
+        iso === today ? 'today' : '',
+        (picked && iso === picked) ? 'picked' : ''
+      ].filter(Boolean).join(' ');
+      html += `<button type="button" class="${cls}" data-date="${iso}">${cursor.getDate()}</button>`;
+      cursor.setDate(cursor.getDate()+1);
+    }
+    grid.innerHTML = html;
+  }
+
+  function positionDatePicker(){
+    if(!dpInput || !dpPop) return;
+    const anchor = dpInput.closest('.date-wrap') || dpInput;
+    const r = anchor.getBoundingClientRect();
+    const h = dpPop.offsetHeight || 320;
+    const w = dpPop.offsetWidth || 292;
+    let top = r.bottom + 6;
+    if(top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
+    let left = r.left;
+    if(left + w > window.innerWidth - 8) left = Math.max(8, window.innerWidth - w - 8);
+    dpPop.style.top = top + 'px';
+    dpPop.style.left = left + 'px';
+  }
+
+  function toggleDatePicker(input){
+    buildDatePicker();
+    if(dpInput === input && dpPop.classList.contains('open')){ closeDatePicker(); return; }
+    openDatePicker(input);
+  }
+  function openDatePicker(input){
+    buildDatePicker();
+    dpInput = input;
+    const cur = parseDMY(input.value);
+    const base = cur ? new Date(cur+'T00:00:00') : new Date();
+    dpViewY = base.getFullYear();
+    dpViewM = base.getMonth();
+    dpPop.classList.add('open');
+    renderDpGrid();
+    positionDatePicker();
+  }
+  function closeDatePicker(){
+    if(dpPop) dpPop.classList.remove('open');
+    dpInput = null;
+  }
+
+  document.addEventListener('mousedown', e=>{
+    if(!dpPop || !dpPop.classList.contains('open')) return;
+    if(dpPop.contains(e.target)) return;
+    if(e.target.closest('.date-wrap')) return;
+    closeDatePicker();
+  });
+  document.addEventListener('keydown', e=>{ if(e.key === 'Escape') closeDatePicker(); });
+  window.addEventListener('resize', positionDatePicker);
+  document.addEventListener('scroll', ()=>{
+    if(dpPop && dpPop.classList.contains('open')) positionDatePicker();
+  }, true);
+
+  // Wraps a dd/mm/yy text input with a calendar button + auto-formatting while typing.
+  function attachDateField(el){
+    if(!el || el.dataset.dpReady) return;
+    el.dataset.dpReady = '1';
+    attachDateAutoFormat(el);
+
+    const wrap = document.createElement('span');
+    wrap.className = 'date-wrap';
+    el.parentNode.insertBefore(wrap, el);
+    wrap.appendChild(el);
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'dp-btn';
+    btn.title = 'Pick a date';
+    btn.textContent = '📅';
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); toggleDatePicker(el); });
+    wrap.appendChild(btn);
+
+    // Clicking the input itself also opens the calendar; typing still overrides it.
+    el.addEventListener('focus', ()=> openDatePicker(el));
+    el.addEventListener('click', ()=> openDatePicker(el));
+    el.addEventListener('input', ()=>{ if(dpInput === el) closeDatePicker(); });
+  }
+
   function nowISO(){ return new Date().toISOString(); }
   function todayStr(){
     const d = new Date();
@@ -741,7 +1065,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
       cb.addEventListener('change', ()=> toggleSubtaskDone(cb.dataset.sub));
     });
     $$('#subtaskList .subtask-due').forEach(inp=>{
-      attachDateAutoFormat(inp);
+      attachDateField(inp);
       inp.addEventListener('change', ()=>{
         const parsed = parseDMY(inp.value);
         if(parsed === null){ alert('Invalid date. Please use the dd/mm/yy format.'); inp.focus(); return; }
@@ -944,6 +1268,8 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
   function render(){
     renderStats();
     renderProjectFilter();
+    pruneSelection();
+    updateBulkBar();
     const root = $('#viewRoot');
     const list = filteredTasks();
     if(tasks.length === 0){
@@ -1036,19 +1362,33 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
       return t.status; // 'todo' or 'doing'
     }
 
+    // Remember which ids live in each column so "select all" only touches visible cards
+    const colItems = {};
+
     root.innerHTML = `<div class="board">${cols.map(c=>{
       const items = list.filter(t=> colKeyOf(t) === c.key);
+      colItems[c.key] = items.map(t=>t.id);
       const isOverdueCol = c.key === 'overdue';
       return `
         <div class="board-col ${isOverdueCol?'col-overdue':''}" data-status="${c.key}">
-          <h4>${c.label} <span class="count">${items.length}</span></h4>
+          <h4>
+            <span>${c.label}</span>
+            <span class="h4-right">
+              ${items.length ? `<label class="col-select" title="Select all cards in this column">
+                <input type="checkbox" class="col-check" data-col="${c.key}"> All
+              </label>` : ''}
+              <span class="count">${items.length}</span>
+            </span>
+          </h4>
           <div class="board-col-body" data-status="${c.key}">
             ${items.map(t=>{
               const colorClass = 'card-' + cardColorKey(t);
               const prClass = t.priority==='high'?'pr-high':t.priority==='med'?'pr-med':'pr-low';
               const prLabel = t.priority==='high'?'High':t.priority==='med'?'Med':'Low';
+              const isSel = selectedIds.has(t.id);
               return `
-                <div class="card ${colorClass}" draggable="true" data-id="${t.id}">
+                <div class="card ${colorClass} ${isSel?'selected':''}" draggable="true" data-id="${t.id}">
+                  <input type="checkbox" class="c-check" data-id="${t.id}" ${isSel?'checked':''} title="Select this card">
                   <div class="c-title">${escapeHtml(t.title)}</div>
                   ${t.description ? `<div class="c-desc">${escapeHtml(t.description)}</div>` : ''}
                   <div class="c-meta">
@@ -1061,18 +1401,61 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
         </div>`;
     }).join('')}</div>`;
 
+    // --- Per-card checkbox ---
+    $$('.c-check', root).forEach(cb=>{
+      cb.addEventListener('mousedown', e=> e.stopPropagation());
+      cb.addEventListener('click', e=> e.stopPropagation());   // don't open the modal
+      cb.addEventListener('change', ()=>{
+        const id = cb.dataset.id;
+        if(cb.checked) selectedIds.add(id); else selectedIds.delete(id);
+        cb.closest('.card').classList.toggle('selected', cb.checked);
+        syncColChecks(root, colItems);
+        updateBulkBar();
+      });
+    });
+
+    // --- Per-column "select all" ---
+    $$('.col-check', root).forEach(cb=>{
+      cb.addEventListener('change', ()=>{
+        const ids = colItems[cb.dataset.col] || [];
+        ids.forEach(id=> cb.checked ? selectedIds.add(id) : selectedIds.delete(id));
+        ids.forEach(id=>{
+          const card = root.querySelector(`.card[data-id="${id}"]`);
+          if(card){
+            card.classList.toggle('selected', cb.checked);
+            const box = card.querySelector('.c-check');
+            if(box) box.checked = cb.checked;
+          }
+        });
+        syncColChecks(root, colItems);
+        updateBulkBar();
+      });
+    });
+    syncColChecks(root, colItems);
+
     $$('.card', root).forEach(el=>{
-      el.addEventListener('click', ()=>{
+      el.addEventListener('click', (e)=>{
         if(el.dataset.justDragged){ delete el.dataset.justDragged; return; }
+        if(e.target.closest('.c-check')) return;
         openModal(el.dataset.id);
       });
       el.addEventListener('dragstart', (e)=>{
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', el.dataset.id);
-        setTimeout(()=> el.classList.add('dragging'), 0);
+        // Dragging a selected card drags the whole selection with it
+        const group = selectedIds.has(el.dataset.id) ? Array.from(selectedIds) : [el.dataset.id];
+        setTimeout(()=>{
+          el.classList.add('dragging');
+          group.forEach(id=>{
+            if(id === el.dataset.id) return;
+            const other = root.querySelector(`.card[data-id="${id}"]`);
+            if(other) other.classList.add('bulk-ghost');
+          });
+        }, 0);
       });
       el.addEventListener('dragend', ()=>{
         el.classList.remove('dragging');
+        $$('.card.bulk-ghost', root).forEach(c=> c.classList.remove('bulk-ghost'));
       });
     });
 
@@ -1093,18 +1476,94 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
         e.preventDefault();
         col.classList.remove('drag-over');
         const id = e.dataTransfer.getData('text/plain');
-        const t = tasks.find(x=>x.id===id);
-        if(!t || t.status === targetStatus) return;
         const draggedEl = root.querySelector(`.card[data-id="${id}"]`);
         if(draggedEl) draggedEl.dataset.justDragged = '1';
-        const prevStatus = t.status;
-        t.status = targetStatus;
-        addActivity(t, `Changed status: ${statusLabel(prevStatus)} → ${statusLabel(targetStatus)}.`);
-        render();
-        const ok = await updateTaskRemote(id, t);
-        if(!ok){ t.status = prevStatus; render(); }
+        // If the dragged card was part of a selection, move the whole selection
+        const ids = selectedIds.has(id) ? Array.from(selectedIds) : [id];
+        await moveTasks(ids, targetStatus);
       });
     });
+  }
+
+  // ---------- Bulk selection (Kanban) ----------
+  // Reflects the selection state of each column header checkbox: checked when every
+  // card in the column is selected, indeterminate when only some are.
+  function syncColChecks(root, colItems){
+    $$('.col-check', root).forEach(cb=>{
+      const ids = colItems[cb.dataset.col] || [];
+      const picked = ids.filter(id=> selectedIds.has(id)).length;
+      cb.checked = ids.length > 0 && picked === ids.length;
+      cb.indeterminate = picked > 0 && picked < ids.length;
+    });
+  }
+
+  function updateBulkBar(){
+    const bar = $('#bulkBar');
+    const n = selectedIds.size;
+    if(n === 0 || currentView !== 'board'){
+      bar.classList.remove('open');
+      return;
+    }
+    $('#bulkCount').textContent = `${n} card${n>1?'s':''} selected`;
+    $('#bulkMoveTo').value = '';
+    bar.classList.add('open');
+  }
+
+  function clearSelection(){
+    selectedIds.clear();
+    updateBulkBar();
+    if(currentView === 'board') render();
+  }
+
+  // Drops ids that no longer exist (deleted elsewhere / filtered out of the dataset)
+  function pruneSelection(){
+    const alive = new Set(tasks.map(t=>t.id));
+    Array.from(selectedIds).forEach(id=>{ if(!alive.has(id)) selectedIds.delete(id); });
+  }
+
+  async function moveTasks(ids, targetStatus){
+    const moving = ids
+      .map(id=> tasks.find(t=>t.id===id))
+      .filter(t=> t && t.status !== targetStatus);
+    if(moving.length === 0) return;
+
+    const snapshot = moving.map(t=>({t, prev:t.status}));
+    moving.forEach(t=>{
+      const prev = t.status;
+      t.status = targetStatus;
+      addActivity(t, `Changed status: ${statusLabel(prev)} → ${statusLabel(targetStatus)}.`);
+    });
+    render();   // optimistic UI
+
+    const results = await Promise.all(moving.map(t=> updateTaskRemote(t.id, t)));
+    const failed = snapshot.filter((s,i)=> !results[i]);
+    if(failed.length){
+      failed.forEach(s=>{ s.t.status = s.prev; });
+      render();
+    }
+  }
+
+  async function bulkDeleteSelected(){
+    const ids = Array.from(selectedIds);
+    if(ids.length === 0) return;
+    const ok = confirm(`Delete ${ids.length} selected task${ids.length>1?'s':''}? This cannot be undone.`);
+    if(!ok) return;
+
+    const btn = $('#bulkDelete');
+    btn.disabled = true;
+    try{
+      const results = await Promise.all(ids.map(id=> deleteTaskRemote(id)));
+      const deleted = ids.filter((id,i)=> results[i]);
+      tasks = tasks.filter(t=> !deleted.includes(t.id));
+      deleted.forEach(id=> selectedIds.delete(id));
+      if(deleted.length < ids.length){
+        alert(`${ids.length - deleted.length} task(s) could not be deleted. See the error above.`);
+      }
+      updateBulkBar();
+      render();
+    } finally {
+      btn.disabled = false;
+    }
   }
 
   function renderList(root, list){
@@ -1367,9 +1826,9 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
   }
 
   // ---------- Events ----------
-  attachDateAutoFormat($('#f-start'));
-  attachDateAutoFormat($('#f-due'));
-  attachDateAutoFormat($('#newSubtaskDue'));
+  attachDateField($('#f-start'));
+  attachDateField($('#f-due'));
+  attachDateField($('#newSubtaskDue'));
   $('#exportBtn').addEventListener('click', exportToExcel);
   $('#openAdd').addEventListener('click', ()=> openModal(null));
   $('#cancelBtn').addEventListener('click', closeModal);
@@ -1381,11 +1840,21 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
   $('#addSubtaskBtn').addEventListener('click', handleAddSubtask);
   $('#newSubtaskTitle').addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); handleAddSubtask(); } });
   $('#addCommentBtn').addEventListener('click', handleAddComment);
+  $('#bulkClear').addEventListener('click', clearSelection);
+  $('#bulkDelete').addEventListener('click', bulkDeleteSelected);
+  $('#bulkMoveTo').addEventListener('change', async (e)=>{
+    const target = e.target.value;
+    if(!target) return;
+    const ids = Array.from(selectedIds);
+    e.target.value = '';
+    await moveTasks(ids, target);
+  });
   $$('.tab').forEach(tab=>{
     tab.addEventListener('click', ()=>{
       $$('.tab').forEach(x=>x.classList.remove('active'));
       tab.classList.add('active');
       currentView = tab.dataset.view;
+      if(currentView !== 'board') selectedIds.clear();
       render();
     });
   });
