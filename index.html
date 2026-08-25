@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bảng Lịch Trình</title>
+<title>Taskkk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -26,13 +26,16 @@
     --grey-chip:#EDEBE3;
     --radius:10px;
     --shadow: 0 1px 2px rgba(32,35,43,0.05), 0 4px 14px rgba(32,35,43,0.06);
+    --font-main:'Google Sans Flex','IBM Plex Sans',sans-serif;
+    --font-display:'Google Sans Flex','Space Grotesk',sans-serif;
+    --font-mono:'Google Sans Flex','IBM Plex Mono',monospace;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
     background:var(--paper);
     color:var(--ink);
-    font-family:'IBM Plex Sans', sans-serif;
+    font-family:var(--font-main);
     -webkit-font-smoothing:antialiased;
     min-height:100vh;
   }
@@ -46,15 +49,15 @@
   }
   .brand{display:flex;flex-direction:column;gap:4px;}
   .brand .eyebrow{
-    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;
     text-transform:uppercase;color:var(--accent);font-weight:500;
   }
   .brand h1{
-    font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:30px;
+    font-family:var(--font-display);font-weight:700;font-size:30px;
     margin:0;letter-spacing:-0.01em;
   }
   .today-tag{
-    font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-soft);
+    font-family:var(--font-mono);font-size:12.5px;color:var(--ink-soft);
     border:1px solid var(--line);background:var(--paper-raised);
     padding:7px 12px;border-radius:999px;display:flex;align-items:center;gap:7px;
   }
@@ -68,7 +71,7 @@
     background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);
     padding:16px 18px;box-shadow:var(--shadow);
   }
-  .stat-card .num{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;line-height:1;}
+  .stat-card .num{font-family:var(--font-display);font-size:26px;font-weight:700;line-height:1;}
   .stat-card .lbl{font-size:12.5px;color:var(--ink-soft);margin-top:6px;}
   .stat-card.accent .num{color:var(--accent);}
   .stat-card.amber .num{color:var(--amber);}
@@ -85,17 +88,17 @@
   .tabs{display:flex;gap:4px;background:var(--paper-raised);border:1px solid var(--line);
     padding:3px;border-radius:999px;}
   .tab{
-    font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:7px 15px;border-radius:999px;
+    font-family:var(--font-mono);font-size:12.5px;padding:7px 15px;border-radius:999px;
     cursor:pointer;color:var(--ink-soft);user-select:none;transition:.15s;
   }
   .tab.active{background:var(--ink);color:var(--paper-raised);}
   .toolbar-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
   select.filter{
-    font-family:'IBM Plex Sans';font-size:13px;padding:8px 10px;border-radius:8px;
+    font-family:var(--font-main);font-size:13px;padding:8px 10px;border-radius:8px;
     border:1px solid var(--line);background:var(--paper-raised);color:var(--ink);
   }
   .btn-add{
-    font-family:'IBM Plex Sans';font-weight:600;font-size:13.5px;
+    font-family:var(--font-main);font-weight:600;font-size:13.5px;
     background:var(--accent);color:#fff;border:none;padding:9px 16px;border-radius:8px;
     cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:var(--shadow);
   }
@@ -106,7 +109,7 @@
     text-align:center;padding:70px 20px;color:var(--ink-soft);
     border:1px dashed var(--line);border-radius:var(--radius);background:var(--paper-raised);
   }
-  .empty h3{font-family:'Space Grotesk';color:var(--ink);margin-bottom:6px;}
+  .empty h3{font-family:var(--font-display);color:var(--ink);margin-bottom:6px;}
 
   /* ===== Timeline / Runway view ===== */
   .runway{
@@ -119,14 +122,14 @@
   }
   .runway-labelcol{
     width:220px;min-width:220px;flex-shrink:0;border-right:1px solid var(--line);
-    padding:10px 14px;font-family:'IBM Plex Mono';font-size:11px;color:var(--ink-soft);
+    padding:10px 14px;font-family:var(--font-mono);font-size:11px;color:var(--ink-soft);
     text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;
     position:sticky;left:0;background:var(--paper-raised);z-index:3;
   }
   .runway-days{display:flex;}
   .runway-day{
     width:38px;min-width:38px;text-align:center;padding:8px 0 6px;
-    font-family:'IBM Plex Mono';font-size:11px;color:var(--ink-soft);border-right:1px solid var(--line);
+    font-family:var(--font-mono);font-size:11px;color:var(--ink-soft);border-right:1px solid var(--line);
   }
   .runway-day.today{background:var(--accent-soft);color:var(--accent);font-weight:600;}
   .runway-day.weekend{background:#FBFAF6;}
@@ -156,7 +159,7 @@
   .board-col{background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);
     padding:12px;min-height:200px;box-shadow:var(--shadow);}
   .board-col h4{
-    font-family:'IBM Plex Mono';font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;
+    font-family:var(--font-mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;
     color:var(--ink-soft);margin:2px 6px 12px;display:flex;justify-content:space-between;align-items:center;
   }
   .board-col h4 .count{background:var(--grey-chip);color:var(--ink);border-radius:999px;
@@ -191,9 +194,9 @@
   .chip.pr-high{background:var(--red-soft);color:var(--red);}
   .chip.pr-med{background:var(--amber-soft);color:var(--amber);}
   .chip.pr-low{background:var(--green-soft);color:var(--green);}
-  .card .c-date{font-family:'IBM Plex Mono';font-size:10.5px;color:var(--ink-soft);}
+  .card .c-date{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-soft);}
 
-  /* Màu thẻ theo trạng thái/hạn chót */
+  /* Card color by status/due date */
   .card.card-blue{background:var(--accent-soft);border-color:var(--accent);}
   .card.card-blue .c-date{color:#2A3D9E;}
   .card.card-yellow{background:var(--amber-soft);border-color:var(--amber);}
@@ -207,7 +210,7 @@
   table.tasklist{width:100%;border-collapse:collapse;background:var(--paper-raised);
     border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
   table.tasklist th{
-    text-align:left;font-family:'IBM Plex Mono';font-size:11px;text-transform:uppercase;
+    text-align:left;font-family:var(--font-mono);font-size:11px;text-transform:uppercase;
     letter-spacing:.06em;color:var(--ink-soft);padding:11px 14px;border-bottom:1px solid var(--line);
     background:#FBFAF6;
   }
@@ -233,13 +236,13 @@
     max-height:90vh;overflow-y:auto;transition:max-width .15s ease;
   }
   .modal.wide{max-width:640px;}
-  .modal h3{font-family:'Space Grotesk';margin:0 0 16px;font-size:19px;}
+  .modal h3{font-family:var(--font-display);margin:0 0 16px;font-size:19px;}
   .modal-body{display:flex;flex-direction:column;}
   .field{margin-bottom:13px;}
   .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-weight:500;}
   .field input, .field select, .field textarea{
     width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;
-    font-family:'IBM Plex Sans';font-size:13.5px;background:var(--paper);color:var(--ink);
+    font-family:var(--font-main);font-size:13.5px;background:var(--paper);color:var(--ink);
   }
   .field textarea{resize:vertical;min-height:60px;line-height:1.5;}
   .field-row{display:flex;gap:10px;}
@@ -256,19 +259,19 @@
   }
   .btn-primary:disabled{opacity:.55;cursor:not-allowed;}
 
-  /* ===== Modal extra: subtasks / comments / activity (chỉ hiện khi bấm vào task) ===== */
+  /* ===== Modal extra: subtasks / comments / activity (only shown when opening a task) ===== */
   .modal-extra{margin-top:6px;padding-top:16px;border-top:1px solid var(--line);
     display:flex;flex-direction:column;gap:20px;}
   .extra-section h4{
-    font-family:'IBM Plex Mono';font-size:11px;text-transform:uppercase;letter-spacing:.08em;
+    font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;
     color:var(--ink-soft);margin:0 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
   }
   .extra-section h4 .count{
     background:var(--grey-chip);color:var(--ink);border-radius:999px;padding:1px 8px;
-    font-size:10.5px;font-family:'IBM Plex Sans';font-weight:600;
+    font-size:10.5px;font-family:var(--font-main);font-weight:600;
   }
   .extra-section h4 .hint-tag{
-    font-family:'IBM Plex Sans';font-size:10.5px;text-transform:none;letter-spacing:0;
+    font-family:var(--font-main);font-size:10.5px;text-transform:none;letter-spacing:0;
     color:var(--ink-soft);font-weight:400;
   }
   .empty-hint{font-size:12px;color:var(--ink-soft);padding:6px 0;}
@@ -285,7 +288,7 @@
   .subtask-add-row input[type="text"]{flex:1;min-width:140px;}
   .subtask-add-row input[type="date"]{width:128px;}
   .subtask-add-row button{
-    font-family:'IBM Plex Sans';font-weight:600;font-size:12.5px;background:var(--ink);color:#fff;
+    font-family:var(--font-main);font-weight:600;font-size:12.5px;background:var(--ink);color:#fff;
     border:none;padding:0 13px;border-radius:8px;cursor:pointer;white-space:nowrap;
   }
 
@@ -293,11 +296,11 @@
   .comment-row{padding:8px 0;border-bottom:1px solid var(--line);}
   .comment-row:last-child{border-bottom:none;}
   .comment-text{font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word;}
-  .comment-time{font-family:'IBM Plex Mono';font-size:10.5px;color:var(--ink-soft);margin-top:3px;}
+  .comment-time{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-soft);margin-top:3px;}
   .comment-add-row{display:flex;gap:7px;margin-top:9px;align-items:flex-start;}
   .comment-add-row textarea{flex:1;min-height:44px;}
   .comment-add-row button{
-    font-family:'IBM Plex Sans';font-weight:600;font-size:12.5px;background:var(--accent);color:#fff;
+    font-family:var(--font-main);font-weight:600;font-size:12.5px;background:var(--accent);color:#fff;
     border:none;padding:0 15px;height:38px;border-radius:8px;cursor:pointer;white-space:nowrap;flex-shrink:0;
   }
 
@@ -305,12 +308,12 @@
   .activity-row{display:flex;gap:9px;padding:6px 0;}
   .activity-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:6px;flex-shrink:0;}
   .activity-text{font-size:12.5px;line-height:1.4;}
-  .activity-time{font-family:'IBM Plex Mono';font-size:10.5px;color:var(--ink-soft);margin-top:2px;}
+  .activity-time{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-soft);margin-top:2px;}
 
   .note{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
   .footer-note{
     text-align:center;color:var(--ink-soft);font-size:11.5px;margin-top:30px;
-    font-family:'IBM Plex Mono';
+    font-family:var(--font-mono);
   }
   .banner{
     padding:11px 15px;border-radius:9px;font-size:12.5px;margin-bottom:18px;
@@ -320,11 +323,11 @@
   .banner.error{background:var(--red-soft);border-color:var(--red);color:var(--red);}
   .banner code{
     background:rgba(0,0,0,.07);padding:1px 6px;border-radius:5px;
-    font-family:'IBM Plex Mono';font-size:11.5px;
+    font-family:var(--font-mono);font-size:11.5px;
   }
   .banner pre{
     background:rgba(0,0,0,.06);padding:10px 12px;border-radius:7px;
-    font-family:'IBM Plex Mono';font-size:11px;overflow-x:auto;margin:8px 0 2px;
+    font-family:var(--font-mono);font-size:11px;overflow-x:auto;margin:8px 0 2px;
     white-space:pre;
   }
   .banner .banner-close{
@@ -346,8 +349,8 @@
 
   <header class="app-head">
     <div class="brand">
-      <div class="eyebrow">Bảng điều phối công việc</div>
-      <h1>Lịch trình &amp; Tiến độ công việc</h1>
+      <div class="eyebrow">Work Coordination Board</div>
+      <h1>Schedule &amp; Task Progress</h1>
     </div>
     <div class="today-tag"><span class="dot"></span><span id="todayLabel"></span></div>
   </header>
@@ -358,21 +361,21 @@
 
   <div class="toolbar">
     <div class="tabs" id="viewTabs">
-      <div class="tab active" data-view="runway">Dòng thời gian</div>
-      <div class="tab" data-view="board">Bảng Kanban</div>
-      <div class="tab" data-view="list">Danh sách</div>
+      <div class="tab active" data-view="runway">Timeline</div>
+      <div class="tab" data-view="board">Kanban Board</div>
+      <div class="tab" data-view="list">List</div>
     </div>
     <div class="toolbar-right">
       <select class="filter" id="filterProject"></select>
       <select class="filter" id="filterStatus">
-        <option value="all">Tất cả trạng thái</option>
-        <option value="todo">Chưa làm</option>
-        <option value="doing">Đang làm</option>
-        <option value="overdue">Chậm deadline</option>
-        <option value="done">Hoàn thành</option>
+        <option value="all">All Statuses</option>
+        <option value="todo">To Do</option>
+        <option value="doing">In Progress</option>
+        <option value="overdue">Overdue</option>
+        <option value="done">Done</option>
       </select>
-      <button class="btn-secondary" id="exportBtn">⬇ Xuất Excel</button>
-      <button class="btn-add" id="openAdd">+ Thêm công việc</button>
+      <button class="btn-secondary" id="exportBtn">⬇ Export Excel</button>
+      <button class="btn-add" id="openAdd">+ Add Task</button>
     </div>
   </div>
 
@@ -383,116 +386,116 @@
 <!-- Modal -->
 <div class="overlay" id="overlay">
   <div class="modal" id="modalBox">
-    <h3 id="modalTitle">Thêm công việc</h3>
+    <h3 id="modalTitle">Add Task</h3>
     <div class="modal-body">
       <div class="field">
-        <label>Tên công việc</label>
-        <input type="text" id="f-title" placeholder="VD: Thiết kế bộ nhận diện thương hiệu">
+        <label>Task Name</label>
+        <input type="text" id="f-title" placeholder="e.g. Design brand identity">
       </div>
       <div class="field">
-        <label>Dự án / Nhóm</label>
-        <input type="text" id="f-project" placeholder="VD: Dự án A">
+        <label>Project / Team</label>
+        <input type="text" id="f-project" placeholder="e.g. Project A">
       </div>
       <div class="field">
-        <label>Mô tả nội dung</label>
-        <textarea id="f-desc" rows="3" placeholder="Mô tả chi tiết công việc cần làm..."></textarea>
+        <label>Description</label>
+        <textarea id="f-desc" rows="3" placeholder="Describe the task in detail..."></textarea>
       </div>
       <div class="field-row">
         <div class="field">
-          <label>Ngày bắt đầu</label>
+          <label>Start Date</label>
           <input type="date" id="f-start">
         </div>
         <div class="field">
-          <label>Hạn hoàn thành</label>
+          <label>Due Date</label>
           <input type="date" id="f-due">
         </div>
       </div>
       <div class="field-row">
         <div class="field">
-          <label>Mức ưu tiên</label>
+          <label>Priority</label>
           <select id="f-priority">
-            <option value="low">Thấp</option>
-            <option value="med" selected>Trung bình</option>
-            <option value="high">Cao</option>
+            <option value="low">Low</option>
+            <option value="med" selected>Medium</option>
+            <option value="high">High</option>
           </select>
         </div>
         <div class="field">
-          <label>Trạng thái</label>
+          <label>Status</label>
           <select id="f-status">
-            <option value="todo">Chưa làm</option>
-            <option value="doing" selected>Đang làm</option>
-            <option value="done">Hoàn thành</option>
+            <option value="todo">To Do</option>
+            <option value="doing" selected>In Progress</option>
+            <option value="done">Done</option>
           </select>
         </div>
       </div>
 
-      <!-- Các phần dưới đây CHỈ hiện khi mở một công việc đã tồn tại (bấm vào task) -->
+      <!-- The sections below only appear when opening an existing task -->
       <div class="modal-extra" id="modalExtra" style="display:none;">
 
         <div class="extra-section">
-          <h4>Công việc con <span class="count" id="subtaskCount"></span></h4>
+          <h4>Subtasks <span class="count" id="subtaskCount"></span></h4>
           <div id="subtaskList"></div>
           <div class="subtask-add-row">
-            <input type="text" id="newSubtaskTitle" placeholder="Tên công việc con">
+            <input type="text" id="newSubtaskTitle" placeholder="Subtask name">
             <input type="date" id="newSubtaskDue">
-            <button type="button" id="addSubtaskBtn">+ Thêm</button>
+            <button type="button" id="addSubtaskBtn">+ Add</button>
           </div>
-          <div class="note">Hạn công việc chính sẽ tự động dời ra nếu công việc con có hạn muộn hơn.</div>
+          <div class="note">The main task's due date will automatically extend if a subtask has a later due date.</div>
         </div>
 
         <div class="extra-section">
-          <h4>Bình luận</h4>
+          <h4>Comments</h4>
           <div id="commentList" class="comment-list"></div>
           <div class="comment-add-row">
-            <textarea id="newCommentText" placeholder="Viết bình luận..."></textarea>
-            <button type="button" id="addCommentBtn">Gửi</button>
+            <textarea id="newCommentText" placeholder="Write a comment..."></textarea>
+            <button type="button" id="addCommentBtn">Send</button>
           </div>
         </div>
 
         <div class="extra-section">
-          <h4>Lịch sử chỉnh sửa <span class="hint-tag">— tự động ghi nhận theo thời gian thực, không thể chỉnh sửa</span></h4>
+          <h4>Activity Log <span class="hint-tag">— recorded automatically in real time, cannot be edited</span></h4>
           <div id="activityList" class="activity-log"></div>
         </div>
 
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn-secondary btn-danger" id="deleteBtn" style="display:none;">Xoá</button>
+      <button class="btn-secondary btn-danger" id="deleteBtn" style="display:none;">Delete</button>
       <div style="flex:1"></div>
-      <button class="btn-secondary" id="cancelBtn">Huỷ</button>
-      <button class="btn-primary" id="saveBtn">Lưu</button>
+      <button class="btn-secondary" id="cancelBtn">Cancel</button>
+      <button class="btn-primary" id="saveBtn">Save</button>
     </div>
   </div>
 </div>
 
 <script>
 (function(){
-  // ====== CẤU HÌNH BACKEND (Supabase) ======
-  // 1. Tạo project miễn phí tại https://supabase.com
-  // 2. Vào SQL Editor, chạy đoạn SQL tạo bảng "tasks" + các policy RLS (xem banner lỗi trong app nếu thiếu)
-  // 3. Vào Project Settings → API, copy "Project URL" và "anon public key" dán vào 2 dòng dưới đây
+  // ====== BACKEND CONFIGURATION (Supabase) ======
+  // 1. Create a free project at https://supabase.com
+  // 2. Go to SQL Editor and run the SQL that creates the "tasks" table + RLS policies (see the in-app error banner if missing)
+  // 3. Go to Project Settings → API, copy the "Project URL" and "anon public key" into the two lines below
   const SUPABASE_URL = 'https://gqvkdyfoqypkycrbtxwg.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_D6W_s3jVs60xBuEdfuWjUg_ak6hBQgg';
   const BACKEND_READY = !SUPABASE_URL.includes('YOUR_SUPABASE_URL') && !SUPABASE_ANON_KEY.includes('YOUR_SUPABASE_ANON_KEY');
   const db = (BACKEND_READY && window.supabase) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-  // SQL gợi ý để bật quyền cho role "anon" khi app chưa có đăng nhập
+  // Suggested SQL to grant permissions to the "anon" role when the app has no login
   const RLS_FIX_SQL =
 `alter table tasks enable row level security;
 
-create policy "Cho phép đọc" on tasks
+create policy "Allow select" on tasks
 for select using (true);
 
-create policy "Cho phép thêm" on tasks
+create policy "Allow insert" on tasks
 for insert with check (true);
 
-create policy "Cho phép sửa" on tasks
+create policy "Allow update" on tasks
 for update using (true);
 
-create policy "Cho phép xoá" on tasks
+create policy "Allow delete" on tasks
 for delete using (true);`;
 
-  // SQL gợi ý để thêm các cột mới phục vụ Công việc con / Bình luận / Lịch sử chỉnh sửa
+  // Suggested SQL to add the new columns for Subtasks / Comments / Activity Log
   const SCHEMA_FIX_SQL =
 `alter table tasks add column if not exists subtasks jsonb not null default '[]'::jsonb;
 alter table tasks add column if not exists comments jsonb not null default '[]'::jsonb;
@@ -508,11 +511,11 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
 
   function fmtDate(d){
     if(!d) return '—';
-    return new Date(d+'T00:00:00').toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'});
+    return new Date(d+'T00:00:00').toLocaleDateString('en-US',{day:'2-digit',month:'2-digit'});
   }
   function fmtDateTime(iso){
     if(!iso) return '';
-    return new Date(iso).toLocaleString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    return new Date(iso).toLocaleString('en-US',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
   }
   function nowISO(){ return new Date().toISOString(); }
   function todayStr(){
@@ -529,7 +532,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
   }
   function uid(){ return 't_' + Math.random().toString(36).slice(2,10); }
 
-  // Số ngày còn lại được tính là "sắp tới hạn" (vàng) khi chưa quá hạn
+  // Number of days remaining considered "due soon" (yellow) when not yet overdue
   const DUE_SOON_DAYS = 2;
   function cardColorKey(t){
     if(t.status === 'done') return 'green';
@@ -542,7 +545,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
   function showBanner(type, html, closable){
     const el = $('#backendBanner');
     el.className = 'banner ' + type;
-    el.innerHTML = (closable ? '<button class="banner-close" title="Đóng">✕</button>' : '') + html;
+    el.innerHTML = (closable ? '<button class="banner-close" title="Close">✕</button>' : '') + html;
     el.style.display = 'block';
     if(closable){
       el.querySelector('.banner-close').addEventListener('click', hideBanner);
@@ -550,29 +553,29 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
   }
   function hideBanner(){ $('#backendBanner').style.display = 'none'; }
 
-  // Nhận diện các lỗi RLS phổ biến của Supabase/Postgres và hiển thị hướng dẫn sửa ngay trong app
+  // Detect common Supabase/Postgres RLS errors and show a fix guide right in the app
   function isRlsError(err){
     const msg = (err && err.message) ? err.message.toLowerCase() : '';
     return msg.includes('row-level security') || msg.includes('row level security') || err?.code === '42501';
   }
   function showRlsBanner(){
     showBanner('error',
-      `<strong>Thiếu quyền ghi dữ liệu (Row-Level Security).</strong> Bảng <code>tasks</code> trên Supabase đã bật RLS nhưng chưa có policy cho phép thêm/sửa/xoá.
-      Vào <strong>Supabase → SQL Editor</strong> và chạy đoạn SQL sau, rồi thử lại:
+      `<strong>Missing write permissions (Row-Level Security).</strong> The <code>tasks</code> table on Supabase has RLS enabled but no policy allows insert/update/delete.
+      Go to <strong>Supabase → SQL Editor</strong> and run the SQL below, then try again:
       <pre>${escapeHtml(RLS_FIX_SQL)}</pre>`,
       true
     );
   }
 
-  // Nhận diện lỗi thiếu cột (subtasks / comments / activity) và hiển thị hướng dẫn sửa
+  // Detect missing-column errors (subtasks / comments / activity) and show a fix guide
   function isMissingColumnError(err){
     const msg = (err && err.message) ? err.message.toLowerCase() : '';
     return (msg.includes('column') && msg.includes('does not exist')) || err?.code === '42703';
   }
   function showSchemaBanner(){
     showBanner('error',
-      `<strong>Thiếu cột dữ liệu cho Công việc con / Bình luận / Lịch sử chỉnh sửa.</strong>
-      Vào <strong>Supabase → SQL Editor</strong> và chạy đoạn SQL sau, rồi thử lại:
+      `<strong>Missing columns for Subtasks / Comments / Activity Log.</strong>
+      Go to <strong>Supabase → SQL Editor</strong> and run the SQL below, then try again:
       <pre>${escapeHtml(SCHEMA_FIX_SQL)}</pre>`,
       true
     );
@@ -601,19 +604,19 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
         tasks = (data || []).map(rowToTask);
         hideBanner();
       }catch(e){
-        console.error('Lỗi tải dữ liệu:', e);
+        console.error('Error loading data:', e);
         tasks = [];
         if(isRlsError(e)){
           showRlsBanner();
         } else if(isMissingColumnError(e)){
           showSchemaBanner();
         } else {
-          showBanner('error', 'Không kết nối được tới backend Supabase. Kiểm tra lại URL/Key, hoặc chắc chắn đã tạo bảng <code>tasks</code> đúng cấu trúc.', true);
+          showBanner('error', 'Could not connect to the Supabase backend. Check the URL/Key, or make sure the <code>tasks</code> table was created with the correct structure.', true);
         }
       }
     } else {
       tasks = seedTasks();
-      showBanner('setup', 'Chưa cấu hình backend — đang hiển thị dữ liệu mẫu chỉ lưu tạm trên trình duyệt này. Dán <code>SUPABASE_URL</code> và <code>SUPABASE_ANON_KEY</code> vào đầu file để đồng bộ dữ liệu qua nhiều thiết bị.', true);
+      showBanner('setup', 'Backend not configured — showing sample data stored only in this browser. Paste your <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> at the top of the file to sync data across devices.', true);
     }
     render();
   }
@@ -624,7 +627,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
       if(error){
         if(isRlsError(error)) showRlsBanner();
         else if(isMissingColumnError(error)) showSchemaBanner();
-        else alert('Lỗi khi lưu công việc: ' + error.message);
+        else alert('Error saving task: ' + error.message);
         return null;
       }
       return rowToTask(data);
@@ -637,7 +640,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
       if(error){
         if(isRlsError(error)) showRlsBanner();
         else if(isMissingColumnError(error)) showSchemaBanner();
-        else alert('Lỗi khi cập nhật công việc: ' + error.message);
+        else alert('Error updating task: ' + error.message);
         return false;
       }
     }
@@ -649,20 +652,20 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
       if(error){
         if(isRlsError(error)) showRlsBanner();
         else if(isMissingColumnError(error)) showSchemaBanner();
-        else alert('Lỗi khi xoá công việc: ' + error.message);
+        else alert('Error deleting task: ' + error.message);
         return false;
       }
     }
     return true;
   }
 
-  // ---------- Công việc con / Bình luận / Lịch sử chỉnh sửa ----------
+  // ---------- Subtasks / Comments / Activity Log ----------
   function addActivity(t, text){
     t.activity = [...(t.activity||[]), {id:uid(), text, time: nowISO()}];
   }
 
-  // Sub-task ảnh hưởng trực tiếp đến hạn của task chính: nếu công việc con có hạn muộn hơn
-  // hạn hiện tại của task chính, hạn task chính sẽ tự động dời ra (chỉ dời ra, không tự rút ngắn lại).
+  // Subtasks directly affect the parent task's due date: if a subtask has a later due date
+  // than the parent task's current due date, the parent due date auto-extends (only extends, never shrinks).
   function syncTaskDueWithSubtasks(t){
     const subDues = (t.subtasks||[]).map(s=>s.due).filter(Boolean);
     if(subDues.length===0) return false;
@@ -670,7 +673,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     if(maxSubDue > t.due){
       const old = t.due;
       t.due = maxSubDue;
-      addActivity(t, `Hạn hoàn thành tự động dời từ ${fmtDate(old)} sang ${fmtDate(maxSubDue)} do công việc con.`);
+      addActivity(t, `Due date automatically extended from ${fmtDate(old)} to ${fmtDate(maxSubDue)} because of a subtask.`);
       return true;
     }
     return false;
@@ -681,7 +684,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
   }
 
   function renderModalExtra(t){
-    // --- Công việc con ---
+    // --- Subtasks ---
     const subs = t.subtasks || [];
     const doneCount = subs.filter(s=>s.done).length;
     $('#subtaskCount').textContent = subs.length ? `${doneCount}/${subs.length}` : '';
@@ -692,9 +695,9 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
           <span>${escapeHtml(s.title)}</span>
         </label>
         <input type="date" class="subtask-due" data-sub-due="${s.id}" value="${s.due||''}">
-        <button type="button" class="icon-btn subtask-del" data-sub-del="${s.id}" title="Xoá công việc con">✕</button>
+        <button type="button" class="icon-btn subtask-del" data-sub-del="${s.id}" title="Delete subtask">✕</button>
       </div>
-    `).join('') : `<div class="empty-hint">Chưa có công việc con.</div>`;
+    `).join('') : `<div class="empty-hint">No subtasks yet.</div>`;
 
     $$('#subtaskList input[type="checkbox"]').forEach(cb=>{
       cb.addEventListener('change', ()=> toggleSubtaskDone(cb.dataset.sub));
@@ -706,16 +709,16 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
       btn.addEventListener('click', ()=> deleteSubtask(btn.dataset.subDel));
     });
 
-    // --- Bình luận (mới nhất trước) ---
+    // --- Comments (newest first) ---
     const comments = [...(t.comments||[])].sort((a,b)=> b.time.localeCompare(a.time));
     $('#commentList').innerHTML = comments.length ? comments.map(c=>`
       <div class="comment-row">
         <div class="comment-text">${escapeHtml(c.text)}</div>
         <div class="comment-time">${fmtDateTime(c.time)}</div>
       </div>
-    `).join('') : `<div class="empty-hint">Chưa có bình luận nào.</div>`;
+    `).join('') : `<div class="empty-hint">No comments yet.</div>`;
 
-    // --- Lịch sử chỉnh sửa (chỉ đọc, tự động ghi nhận, mới nhất trước) ---
+    // --- Activity log (read-only, recorded automatically, newest first) ---
     const activity = [...(t.activity||[])].sort((a,b)=> b.time.localeCompare(a.time));
     $('#activityList').innerHTML = activity.length ? activity.map(a=>`
       <div class="activity-row">
@@ -725,7 +728,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
           <div class="activity-time">${fmtDateTime(a.time)}</div>
         </div>
       </div>
-    `).join('') : `<div class="empty-hint">Chưa có hoạt động nào.</div>`;
+    `).join('') : `<div class="empty-hint">No activity yet.</div>`;
   }
 
   async function handleAddSubtask(){
@@ -738,7 +741,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     const due = dueInput.value || '';
     const sub = {id:uid(), title, due, done:false};
     t.subtasks = [...(t.subtasks||[]), sub];
-    addActivity(t, `Thêm công việc con "${title}"${due?` (hạn ${fmtDate(due)})`:''}.`);
+    addActivity(t, `Added subtask "${title}"${due?` (due ${fmtDate(due)})`:''}.`);
     const extended = syncTaskDueWithSubtasks(t);
     const ok = await persistTaskExtra(t);
     if(ok){
@@ -755,7 +758,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     const s = (t.subtasks||[]).find(x=>x.id===subId);
     if(!s) return;
     s.done = !s.done;
-    addActivity(t, `${s.done?'Hoàn thành':'Bỏ đánh dấu hoàn thành'} công việc con "${s.title}".`);
+    addActivity(t, `${s.done?'Completed':'Unmarked'} subtask "${s.title}".`);
     const ok = await persistTaskExtra(t);
     if(ok) renderModalExtra(t);
   }
@@ -767,7 +770,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     if(!s) return;
     const old = s.due;
     s.due = newDue;
-    addActivity(t, `Đổi hạn công việc con "${s.title}": ${old?fmtDate(old):'—'} → ${newDue?fmtDate(newDue):'—'}.`);
+    addActivity(t, `Changed subtask "${s.title}" due date: ${old?fmtDate(old):'—'} → ${newDue?fmtDate(newDue):'—'}.`);
     const extended = syncTaskDueWithSubtasks(t);
     const ok = await persistTaskExtra(t);
     if(ok){
@@ -782,7 +785,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     if(!t) return;
     const s = (t.subtasks||[]).find(x=>x.id===subId);
     t.subtasks = (t.subtasks||[]).filter(x=>x.id!==subId);
-    if(s) addActivity(t, `Xoá công việc con "${s.title}".`);
+    if(s) addActivity(t, `Deleted subtask "${s.title}".`);
     const ok = await persistTaskExtra(t);
     if(ok) renderModalExtra(t);
   }
@@ -795,7 +798,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     if(!text){ input.focus(); return; }
     const c = {id:uid(), text, time: nowISO()};
     t.comments = [...(t.comments||[]), c];
-    addActivity(t, `Đã thêm bình luận.`);
+    addActivity(t, `Added a comment.`);
     const ok = await persistTaskExtra(t);
     if(ok){
       input.value='';
@@ -805,32 +808,32 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
 
   function diffActivity(oldT, newFields){
     const notes = [];
-    if(oldT.title !== newFields.title) notes.push(`Đổi tên công việc thành "${newFields.title}".`);
-    if(oldT.project !== newFields.project) notes.push(`Đổi dự án: ${oldT.project} → ${newFields.project}.`);
-    if(oldT.start !== newFields.start) notes.push(`Đổi ngày bắt đầu: ${fmtDate(oldT.start)} → ${fmtDate(newFields.start)}.`);
-    if(oldT.due !== newFields.due) notes.push(`Đổi hạn hoàn thành: ${fmtDate(oldT.due)} → ${fmtDate(newFields.due)}.`);
-    if(oldT.priority !== newFields.priority) notes.push(`Đổi mức ưu tiên: ${priorityLabel(oldT.priority)} → ${priorityLabel(newFields.priority)}.`);
-    if(oldT.status !== newFields.status) notes.push(`Đổi trạng thái: ${statusLabel(oldT.status)} → ${statusLabel(newFields.status)}.`);
+    if(oldT.title !== newFields.title) notes.push(`Renamed task to "${newFields.title}".`);
+    if(oldT.project !== newFields.project) notes.push(`Changed project: ${oldT.project} → ${newFields.project}.`);
+    if(oldT.start !== newFields.start) notes.push(`Changed start date: ${fmtDate(oldT.start)} → ${fmtDate(newFields.start)}.`);
+    if(oldT.due !== newFields.due) notes.push(`Changed due date: ${fmtDate(oldT.due)} → ${fmtDate(newFields.due)}.`);
+    if(oldT.priority !== newFields.priority) notes.push(`Changed priority: ${priorityLabel(oldT.priority)} → ${priorityLabel(newFields.priority)}.`);
+    if(oldT.status !== newFields.status) notes.push(`Changed status: ${statusLabel(oldT.status)} → ${statusLabel(newFields.status)}.`);
     return notes;
   }
 
   function seedTasks(){
     const off = (n) => { const d=new Date(); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
-    const mkActivity = () => [{id:uid(), text:'Đã tạo công việc.', time: nowISO()}];
+    const mkActivity = () => [{id:uid(), text:'Task created.', time: nowISO()}];
     const list = [
-      {id:uid(), title:'Xây dựng bộ nhận diện thương hiệu', project:'Sản phẩm mới', description:'Thiết kế logo, bảng màu và font chữ cho thương hiệu mới.', start:off(-2), due:off(4), priority:'high', status:'doing',
+      {id:uid(), title:'Build brand identity system', project:'New Product', description:'Design the logo, color palette, and typography for the new brand.', start:off(-2), due:off(4), priority:'high', status:'doing',
         subtasks:[
-          {id:uid(), title:'Phác thảo logo', due:off(1), done:true},
-          {id:uid(), title:'Chọn bảng màu & font chữ', due:off(3), done:false},
-          {id:uid(), title:'Bộ quy chuẩn thương hiệu (Brand Guideline)', due:off(6), done:false}
+          {id:uid(), title:'Sketch logo concepts', due:off(1), done:true},
+          {id:uid(), title:'Pick color palette & typography', due:off(3), done:false},
+          {id:uid(), title:'Brand guideline document', due:off(6), done:false}
         ],
-        comments:[{id:uid(), text:'Khách hàng muốn xem thêm 2 phương án logo nữa.', time:new Date(Date.now()-3*3600e3).toISOString()}],
+        comments:[{id:uid(), text:'Client wants to see two more logo options.', time:new Date(Date.now()-3*3600e3).toISOString()}],
         activity: mkActivity()
       },
-      {id:uid(), title:'Thiết kế bài đăng mạng xã hội tuần', project:'Social Media', description:'', start:off(0), due:off(2), priority:'med', status:'todo', subtasks:[], comments:[], activity: mkActivity()},
-      {id:uid(), title:'In ấn brochure sự kiện', project:'Print', description:'', start:off(-5), due:off(-1), priority:'high', status:'doing', subtasks:[], comments:[], activity: mkActivity()},
-      {id:uid(), title:'Tái định vị thương hiệu sản phẩm', project:'Repositioning', description:'', start:off(1), due:off(9), priority:'med', status:'todo', subtasks:[], comments:[], activity: mkActivity()},
-      {id:uid(), title:'Duyệt bản in danh thiếp', project:'Print', description:'', start:off(-6), due:off(-3), priority:'low', status:'done', subtasks:[], comments:[], activity: mkActivity()},
+      {id:uid(), title:'Design this week\\'s social media posts', project:'Social Media', description:'', start:off(0), due:off(2), priority:'med', status:'todo', subtasks:[], comments:[], activity: mkActivity()},
+      {id:uid(), title:'Print event brochure', project:'Print', description:'', start:off(-5), due:off(-1), priority:'high', status:'doing', subtasks:[], comments:[], activity: mkActivity()},
+      {id:uid(), title:'Product repositioning strategy', project:'Repositioning', description:'', start:off(1), due:off(9), priority:'med', status:'todo', subtasks:[], comments:[], activity: mkActivity()},
+      {id:uid(), title:'Approve business card print proof', project:'Print', description:'', start:off(-6), due:off(-3), priority:'low', status:'done', subtasks:[], comments:[], activity: mkActivity()},
     ];
     list.forEach(t=> syncTaskDueWithSubtasks(t));
     return list;
@@ -847,19 +850,19 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     $('#statsRow').innerHTML = `
       <div class="stat-card accent">
         <div class="num">${total}</div>
-        <div class="lbl">Tổng công việc</div>
+        <div class="lbl">Total Tasks</div>
       </div>
       <div class="stat-card">
         <div class="num">${pct}%</div>
-        <div class="lbl">Hoàn thành</div>
+        <div class="lbl">Completed</div>
       </div>
       <div class="stat-card amber">
         <div class="num">${doing}</div>
-        <div class="lbl">Đang thực hiện</div>
+        <div class="lbl">In Progress</div>
       </div>
       <div class="stat-card red">
         <div class="num">${overdue}</div>
-        <div class="lbl">Quá hạn</div>
+        <div class="lbl">Overdue</div>
       </div>
     `;
   }
@@ -884,7 +887,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     const sel = $('#filterProject');
     const projects = Array.from(new Set(tasks.map(t=>t.project))).sort();
     const cur = sel.value || 'all';
-    sel.innerHTML = `<option value="all">Tất cả dự án</option>` +
+    sel.innerHTML = `<option value="all">All Projects</option>` +
       projects.map(p=>`<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
     if(projects.includes(cur)) sel.value = cur;
   }
@@ -899,11 +902,11 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     const root = $('#viewRoot');
     const list = filteredTasks();
     if(tasks.length === 0){
-      root.innerHTML = `<div class="empty"><h3>Chưa có công việc nào</h3><p>Nhấn "Thêm công việc" để bắt đầu lên lịch trình của bạn.</p></div>`;
+      root.innerHTML = `<div class="empty"><h3>No tasks yet</h3><p>Click "Add Task" to start planning your schedule.</p></div>`;
       return;
     }
     if(list.length === 0){
-      root.innerHTML = `<div class="empty"><h3>Không có kết quả</h3><p>Thử đổi bộ lọc dự án hoặc trạng thái.</p></div>`;
+      root.innerHTML = `<div class="empty"><h3>No results</h3><p>Try changing the project or status filter.</p></div>`;
       return;
     }
     if(currentView === 'runway') renderRunway(root, list);
@@ -920,7 +923,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     const start = new Date(minStart+'T00:00:00'); start.setDate(start.getDate()-2);
     const end = new Date(maxDue+'T00:00:00'); end.setDate(end.getDate()+3);
     const totalDays = Math.max(1, Math.round((end-start)/86400000)+1);
-    const dow = ['CN','T2','T3','T4','T5','T6','T7'];
+    const dow = ['Su','Mo','Tu','We','Th','Fr','Sa'];
 
     let daysHtml = '';
     for(let i=0;i<totalDays;i++){
@@ -960,7 +963,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
         <div class="runway-scroll">
           <div style="min-width:${220+totalDays*38}px;">
             <div class="runway-head">
-              <div class="runway-labelcol">Công việc</div>
+              <div class="runway-labelcol">Task</div>
               <div class="runway-days">${daysHtml}</div>
             </div>
             ${rowsHtml}
@@ -975,17 +978,17 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
 
   function renderBoard(root, list){
     const cols = [
-      {key:'todo', label:'Chưa làm'},
-      {key:'doing', label:'Đang làm'},
-      {key:'overdue', label:'Chậm deadline'},
-      {key:'done', label:'Hoàn thành'}
+      {key:'todo', label:'To Do'},
+      {key:'doing', label:'In Progress'},
+      {key:'overdue', label:'Overdue'},
+      {key:'done', label:'Done'}
     ];
-    // Phân loại: quá hạn được tách thành cột riêng (ưu tiên trên trạng thái todo/doing);
-    // Hoàn thành luôn thuộc cột Hoàn thành dù có quá hạn hay không.
+    // Classification: overdue tasks get their own column (takes priority over todo/doing);
+    // Done tasks always stay in the Done column regardless of due date.
     function colKeyOf(t){
       if(t.status === 'done') return 'done';
       if(t.due < todayStr()) return 'overdue';
-      return t.status; // 'todo' hoặc 'doing'
+      return t.status; // 'todo' or 'doing'
     }
 
     root.innerHTML = `<div class="board">${cols.map(c=>{
@@ -998,7 +1001,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
             ${items.map(t=>{
               const colorClass = 'card-' + cardColorKey(t);
               const prClass = t.priority==='high'?'pr-high':t.priority==='med'?'pr-med':'pr-low';
-              const prLabel = t.priority==='high'?'Cao':t.priority==='med'?'TB':'Thấp';
+              const prLabel = t.priority==='high'?'High':t.priority==='med'?'Med':'Low';
               return `
                 <div class="card ${colorClass}" draggable="true" data-id="${t.id}">
                   <div class="c-title">${escapeHtml(t.title)}</div>
@@ -1008,7 +1011,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
                     <span class="c-date">${fmtDate(t.start)} → ${fmtDate(t.due)}</span>
                   </div>
                 </div>`;
-            }).join('') || `<div style="font-size:12px;color:var(--ink-soft);padding:10px 4px;">Không có công việc</div>`}
+            }).join('') || `<div style="font-size:12px;color:var(--ink-soft);padding:10px 4px;">No tasks</div>`}
           </div>
         </div>`;
     }).join('')}</div>`;
@@ -1028,8 +1031,8 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
       });
     });
 
-    // Cột "Chậm deadline" là tự động (tính theo hạn chót), không nhận thả trực tiếp —
-    // muốn hết quá hạn thì kéo sang "Hoàn thành" hoặc sửa lại hạn hoàn thành trong modal.
+    // The "Overdue" column is automatic (based on due date) and doesn't accept drops directly —
+    // to clear an overdue task, drag it to "Done" or edit its due date in the modal.
     $$('.board-col', root).forEach(col=>{
       const targetStatus = col.dataset.status;
       if(targetStatus === 'overdue') return;
@@ -1051,7 +1054,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
         if(draggedEl) draggedEl.dataset.justDragged = '1';
         const prevStatus = t.status;
         t.status = targetStatus;
-        addActivity(t, `Đổi trạng thái: ${statusLabel(prevStatus)} → ${statusLabel(targetStatus)}.`);
+        addActivity(t, `Changed status: ${statusLabel(prevStatus)} → ${statusLabel(targetStatus)}.`);
         render();
         const ok = await updateTaskRemote(id, t);
         if(!ok){ t.status = prevStatus; render(); }
@@ -1064,14 +1067,14 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     root.innerHTML = `
       <table class="tasklist">
         <thead><tr>
-          <th>Công việc</th><th>Dự án</th><th>Bắt đầu</th><th>Hạn</th>
-          <th>Ưu tiên</th><th>Trạng thái</th><th></th>
+          <th>Task</th><th>Project</th><th>Start</th><th>Due</th>
+          <th>Priority</th><th>Status</th><th></th>
         </tr></thead>
         <tbody>
           ${sorted.map(t=>{
             const overdue = t.status!=='done' && t.due < todayStr();
-            const prLabel = t.priority==='high'?'Cao':t.priority==='med'?'TB':'Thấp';
-            const stLabel = t.status==='todo'?'Chưa làm':t.status==='doing'?'Đang làm':'Hoàn thành';
+            const prLabel = t.priority==='high'?'High':t.priority==='med'?'Med':'Low';
+            const stLabel = t.status==='todo'?'To Do':t.status==='doing'?'In Progress':'Done';
             return `
             <tr>
               <td>${escapeHtml(t.title)}</td>
@@ -1080,7 +1083,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
               <td style="color:${overdue?'var(--red)':'inherit'};font-weight:${overdue?'600':'400'};">${fmtDate(t.due)}${overdue?' ⚠':''}</td>
               <td>${prLabel}</td>
               <td><span class="status-pill status-${t.status}">${stLabel}</span></td>
-              <td><button class="icon-btn" data-id="${t.id}" title="Sửa">✎</button></td>
+              <td><button class="icon-btn" data-id="${t.id}" title="Edit">✎</button></td>
             </tr>`;
           }).join('')}
         </tbody>
@@ -1100,7 +1103,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
   function openModal(id){
     editingId = id || null;
     const t = id ? tasks.find(x=>x.id===id) : null;
-    $('#modalTitle').textContent = t ? 'Sửa công việc' : 'Thêm công việc';
+    $('#modalTitle').textContent = t ? 'Edit Task' : 'Add Task';
     $('#f-title').value = t ? t.title : '';
     $('#f-project').value = t ? t.project : '';
     $('#f-desc').value = t ? (t.description || '') : '';
@@ -1135,7 +1138,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
   async function saveFromModal(){
     const title = $('#f-title').value.trim();
     if(!title){ $('#f-title').focus(); return; }
-    let project = $('#f-project').value.trim() || 'Chưa phân loại';
+    let project = $('#f-project').value.trim() || 'Uncategorized';
     const description = $('#f-desc').value.trim();
     let start = $('#f-start').value || todayStr();
     let due = $('#f-due').value || start;
@@ -1158,7 +1161,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
         if(!ok) return;
         Object.assign(t, fields, {activity: updatedActivity});
       } else {
-        const fields2 = {...fields, subtasks:[], comments:[], activity:[{id:uid(), text:'Đã tạo công việc.', time: nowISO()}]};
+        const fields2 = {...fields, subtasks:[], comments:[], activity:[{id:uid(), text:'Task created.', time: nowISO()}]};
         const newTask = await addTaskRemote(fields2);
         if(!newTask) return;
         tasks.push(newTask);
@@ -1180,32 +1183,32 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
   }
 
   // ---------- Excel export ----------
-  function statusLabel(s){ return s==='todo'?'Chưa làm':s==='doing'?'Đang làm':'Hoàn thành'; }
-  function priorityLabel(p){ return p==='high'?'Cao':p==='med'?'Trung bình':'Thấp'; }
+  function statusLabel(s){ return s==='todo'?'To Do':s==='doing'?'In Progress':'Done'; }
+  function priorityLabel(p){ return p==='high'?'High':p==='med'?'Medium':'Low'; }
   function dueStateLabel(t){
-    return {green:'Hoàn thành', red:'Chậm deadline', yellow:'Sắp tới hạn', blue:'Đúng hạn'}[cardColorKey(t)];
+    return {green:'Done', red:'Overdue', yellow:'Due Soon', blue:'On Track'}[cardColorKey(t)];
   }
 
   function taskRow(t){
     return {
-      'Tên công việc': t.title,
-      'Dự án': t.project,
-      'Mô tả nội dung': t.description || '',
-      'Ngày bắt đầu': t.start,
-      'Hạn hoàn thành': t.due,
-      'Mức ưu tiên': priorityLabel(t.priority),
-      'Trạng thái công việc': statusLabel(t.status),
-      'Tình trạng hạn chót': dueStateLabel(t)
+      'Task Name': t.title,
+      'Project': t.project,
+      'Description': t.description || '',
+      'Start Date': t.start,
+      'Due Date': t.due,
+      'Priority': priorityLabel(t.priority),
+      'Task Status': statusLabel(t.status),
+      'Due Status': dueStateLabel(t)
     };
   }
 
   function exportToExcel(){
     if(typeof XLSX === 'undefined'){
-      alert('Không thể tải thư viện xuất Excel. Vui lòng kiểm tra kết nối mạng và thử lại.');
+      alert('Could not load the Excel export library. Please check your internet connection and try again.');
       return;
     }
     if(tasks.length === 0){
-      alert('Chưa có công việc nào để xuất.');
+      alert('There are no tasks to export yet.');
       return;
     }
     const wb = XLSX.utils.book_new();
@@ -1218,18 +1221,18 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     const projects = Array.from(new Set(tasks.map(t=>t.project))).sort();
 
     const overviewRows = [
-      {'Chỉ số': 'Tổng số công việc', 'Giá trị': total},
-      {'Chỉ số': 'Đã hoàn thành', 'Giá trị': done},
-      {'Chỉ số': 'Đang thực hiện', 'Giá trị': doing},
-      {'Chỉ số': 'Chưa làm', 'Giá trị': todo},
-      {'Chỉ số': 'Chậm deadline', 'Giá trị': overdue},
-      {'Chỉ số': 'Tỷ lệ hoàn thành', 'Giá trị': total ? Math.round(done/total*100)+'%' : '0%'},
+      {'Metric': 'Total Tasks', 'Value': total},
+      {'Metric': 'Completed', 'Value': done},
+      {'Metric': 'In Progress', 'Value': doing},
+      {'Metric': 'To Do', 'Value': todo},
+      {'Metric': 'Overdue', 'Value': overdue},
+      {'Metric': 'Completion Rate', 'Value': total ? Math.round(done/total*100)+'%' : '0%'},
     ];
     const wsOverview = XLSX.utils.json_to_sheet(overviewRows, {skipHeader:false});
     wsOverview['!cols'] = [{wch:28},{wch:16}];
-    XLSX.utils.book_append_sheet(wb, wsOverview, 'Tổng quan');
+    XLSX.utils.book_append_sheet(wb, wsOverview, 'Overview');
 
-    // Sheet riêng: trạng thái chi tiết theo từng dự án, để thấy rõ dự án nào đang ổn / đang chậm
+    // Separate sheet: detailed status per project, to see at a glance which projects are on track / behind
     const projectStatusRows = projects.map(p=>{
       const items = tasks.filter(t=>t.project===p);
       const pTotal = items.length;
@@ -1238,64 +1241,64 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
       const pTodo = items.filter(t=>t.status==='todo').length;
       const pOverdue = items.filter(t=> t.status!=='done' && t.due < todayStr()).length;
       return {
-        'Dự án': p,
-        'Tổng số công việc': pTotal,
-        'Chưa làm': pTodo,
-        'Đang làm': pDoing,
-        'Chậm deadline': pOverdue,
-        'Hoàn thành': pDone,
-        'Tỷ lệ hoàn thành': pTotal ? Math.round(pDone/pTotal*100)+'%' : '0%'
+        'Project': p,
+        'Total Tasks': pTotal,
+        'To Do': pTodo,
+        'In Progress': pDoing,
+        'Overdue': pOverdue,
+        'Done': pDone,
+        'Completion Rate': pTotal ? Math.round(pDone/pTotal*100)+'%' : '0%'
       };
     });
     const wsProjectStatus = XLSX.utils.json_to_sheet(projectStatusRows);
     wsProjectStatus['!cols'] = [{wch:24},{wch:16},{wch:12},{wch:12},{wch:14},{wch:12},{wch:16}];
-    XLSX.utils.book_append_sheet(wb, wsProjectStatus, 'Trạng thái theo dự án');
+    XLSX.utils.book_append_sheet(wb, wsProjectStatus, 'Status by Project');
 
     const allSorted = [...tasks].sort((a,b)=> a.due.localeCompare(b.due));
     const wsAll = XLSX.utils.json_to_sheet(allSorted.map(taskRow));
     wsAll['!cols'] = [{wch:32},{wch:18},{wch:34},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
-    XLSX.utils.book_append_sheet(wb, wsAll, 'Toàn bộ công việc');
+    XLSX.utils.book_append_sheet(wb, wsAll, 'All Tasks');
 
-    // Sheet riêng cho Công việc con (phần duy nhất trong các phần mới được đưa vào Excel)
+    // Separate sheet for Subtasks (the only part of the new sections included in the Excel export)
     const subtaskRows = [];
     tasks.forEach(t=>{
       (t.subtasks||[]).forEach(s=>{
         subtaskRows.push({
-          'Công việc cha': t.title,
-          'Dự án': t.project,
-          'Tên công việc con': s.title,
-          'Hạn công việc con': s.due || '',
-          'Trạng thái': s.done ? 'Hoàn thành' : 'Chưa xong'
+          'Parent Task': t.title,
+          'Project': t.project,
+          'Subtask Name': s.title,
+          'Subtask Due Date': s.due || '',
+          'Status': s.done ? 'Done' : 'Not Done'
         });
       });
     });
     const wsSubtasks = subtaskRows.length
       ? XLSX.utils.json_to_sheet(subtaskRows)
-      : XLSX.utils.json_to_sheet([{'Ghi chú':'Không có công việc con nào'}]);
+      : XLSX.utils.json_to_sheet([{'Note':'No subtasks'}]);
     wsSubtasks['!cols'] = [{wch:32},{wch:18},{wch:32},{wch:16},{wch:14}];
-    XLSX.utils.book_append_sheet(wb, wsSubtasks, 'Công việc con');
+    XLSX.utils.book_append_sheet(wb, wsSubtasks, 'Subtasks');
 
-    // Sheet riêng cho các công việc đang chậm deadline, xếp theo mức độ trễ
+    // Separate sheet for overdue tasks, sorted by how overdue they are
     const overdueRows = tasks
       .filter(t=> t.status!=='done' && t.due < todayStr())
       .sort((a,b)=> a.due.localeCompare(b.due))
-      .map(t=> ({...taskRow(t), 'Số ngày đã trễ': daysBetween(t.due, todayStr())}));
+      .map(t=> ({...taskRow(t), 'Days Overdue': daysBetween(t.due, todayStr())}));
     const wsOverdue = overdueRows.length
       ? XLSX.utils.json_to_sheet(overdueRows)
-      : XLSX.utils.json_to_sheet([{'Ghi chú':'Không có công việc chậm deadline'}]);
+      : XLSX.utils.json_to_sheet([{'Note':'No overdue tasks'}]);
     wsOverdue['!cols'] = [{wch:32},{wch:18},{wch:34},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16},{wch:14}];
-    XLSX.utils.book_append_sheet(wb, wsOverdue, 'Chậm deadline');
+    XLSX.utils.book_append_sheet(wb, wsOverdue, 'Overdue');
 
     const statusGroups = [
-      {key:'todo', name:'Chưa làm'},
-      {key:'doing', name:'Đang làm'},
-      {key:'done', name:'Hoàn thành'}
+      {key:'todo', name:'To Do'},
+      {key:'doing', name:'In Progress'},
+      {key:'done', name:'Done'}
     ];
     statusGroups.forEach(g=>{
       const rows = tasks.filter(t=>t.status===g.key)
         .sort((a,b)=> a.due.localeCompare(b.due))
         .map(taskRow);
-      const ws = rows.length ? XLSX.utils.json_to_sheet(rows) : XLSX.utils.json_to_sheet([{'Ghi chú':'Không có công việc'}]);
+      const ws = rows.length ? XLSX.utils.json_to_sheet(rows) : XLSX.utils.json_to_sheet([{'Note':'No tasks'}]);
       ws['!cols'] = [{wch:32},{wch:18},{wch:34},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
       XLSX.utils.book_append_sheet(wb, ws, g.name);
     });
@@ -1304,14 +1307,14 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
       const rows = tasks.filter(t=>t.project===p)
         .sort((a,b)=> a.due.localeCompare(b.due))
         .map(taskRow);
-      const safeName = p.replace(/[\\\/\?\*\[\]:]/g,'').slice(0,28) || 'Dự án';
+      const safeName = p.replace(/[\\\/\?\*\[\]:]/g,'').slice(0,28) || 'Project';
       const ws = XLSX.utils.json_to_sheet(rows);
       ws['!cols'] = [{wch:32},{wch:18},{wch:34},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
       XLSX.utils.book_append_sheet(wb, ws, safeName);
     });
 
     const dateStr = todayStr();
-    XLSX.writeFile(wb, `lich-trinh-cong-viec_${dateStr}.xlsx`);
+    XLSX.writeFile(wb, `taskkk-schedule_${dateStr}.xlsx`);
   }
 
   // ---------- Events ----------
@@ -1335,7 +1338,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     });
   });
 
-  $('#todayLabel').textContent = new Date().toLocaleDateString('vi-VN',{weekday:'long', day:'2-digit', month:'2-digit', year:'numeric'});
+  $('#todayLabel').textContent = new Date().toLocaleDateString('en-US',{weekday:'long', day:'2-digit', month:'2-digit', year:'numeric'});
 
   loadTasks();
 })();
