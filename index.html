@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bảng Lịch Trình</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --paper:#F6F5F0;
+    --paper-raised:#FFFFFF;
+    --ink:#20232B;
+    --ink-soft:#5B5F6B;
+    --line:#DEDCD3;
+    --accent:#3457D5;
+    --accent-soft:#E7EBFB;
+    --amber:#C9840A;
+    --amber-soft:#FBF0DC;
+    --green:#2F7D5C;
+    --green-soft:#E1F0E8;
+    --red:#C13F3F;
+    --red-soft:#FBE6E6;
+    --grey-chip:#EDEBE3;
+    --radius:10px;
+    --shadow: 0 1px 2px rgba(32,35,43,0.05), 0 4px 14px rgba(32,35,43,0.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  ::selection{background:var(--accent-soft);}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 24px 80px;}
+
+  /* Header */
+  header.app-head{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    margin-bottom:26px;flex-wrap:wrap;gap:16px;
+  }
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--accent);font-weight:500;
+  }
+  .brand h1{
+    font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:30px;
+    margin:0;letter-spacing:-0.01em;
+  }
+  .today-tag{
+    font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-soft);
+    border:1px solid var(--line);background:var(--paper-raised);
+    padding:7px 12px;border-radius:999px;display:flex;align-items:center;gap:7px;
+  }
+  .today-tag .dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+
+  /* Stat cards */
+  .stats{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:26px;
+  }
+  .stat-card{
+    background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;box-shadow:var(--shadow);
+  }
+  .stat-card .num{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;line-height:1;}
+  .stat-card .lbl{font-size:12.5px;color:var(--ink-soft);margin-top:6px;}
+  .stat-card.accent .num{color:var(--accent);}
+  .stat-card.amber .num{color:var(--amber);}
+  .stat-card.green .num{color:var(--green);}
+  .stat-card.red .num{color:var(--red);}
+  .bar-track{height:5px;background:var(--grey-chip);border-radius:4px;margin-top:10px;overflow:hidden;}
+  .bar-fill{height:100%;background:var(--accent);border-radius:4px;transition:width .4s ease;}
+
+  /* Toolbar */
+  .toolbar{
+    display:flex;justify-content:space-between;align-items:center;gap:14px;
+    margin-bottom:16px;flex-wrap:wrap;
+  }
+  .tabs{display:flex;gap:4px;background:var(--paper-raised);border:1px solid var(--line);
+    padding:3px;border-radius:999px;}
+  .tab{
+    font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:7px 15px;border-radius:999px;
+    cursor:pointer;color:var(--ink-soft);user-select:none;transition:.15s;
+  }
+  .tab.active{background:var(--ink);color:var(--paper-raised);}
+  .toolbar-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  select.filter{
+    font-family:'IBM Plex Sans';font-size:13px;padding:8px 10px;border-radius:8px;
+    border:1px solid var(--line);background:var(--paper-raised);color:var(--ink);
+  }
+  .btn-add{
+    font-family:'IBM Plex Sans';font-weight:600;font-size:13.5px;
+    background:var(--accent);color:#fff;border:none;padding:9px 16px;border-radius:8px;
+    cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:var(--shadow);
+  }
+  .btn-add:hover{filter:brightness(1.06);}
+
+  /* Empty state */
+  .empty{
+    text-align:center;padding:70px 20px;color:var(--ink-soft);
+    border:1px dashed var(--line);border-radius:var(--radius);background:var(--paper-raised);
+  }
+  .empty h3{font-family:'Space Grotesk';color:var(--ink);margin-bottom:6px;}
+
+  /* ===== Timeline / Runway view ===== */
+  .runway{
+    background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden;
+  }
+  .runway-scroll{overflow-x:auto;}
+  .runway-head{
+    display:flex;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--paper-raised);z-index:2;
+  }
+  .runway-labelcol{
+    width:220px;min-width:220px;flex-shrink:0;border-right:1px solid var(--line);
+    padding:10px 14px;font-family:'IBM Plex Mono';font-size:11px;color:var(--ink-soft);
+    text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;
+    position:sticky;left:0;background:var(--paper-raised);z-index:3;
+  }
+  .runway-days{display:flex;}
+  .runway-day{
+    width:38px;min-width:38px;text-align:center;padding:8px 0 6px;
+    font-family:'IBM Plex Mono';font-size:11px;color:var(--ink-soft);border-right:1px solid var(--line);
+  }
+  .runway-day.today{background:var(--accent-soft);color:var(--accent);font-weight:600;}
+  .runway-day.weekend{background:#FBFAF6;}
+  .runway-day .dow{display:block;font-size:9px;opacity:.7;margin-bottom:2px;}
+  .runway-row{display:flex;border-bottom:1px solid var(--line);}
+  .runway-row:last-child{border-bottom:none;}
+  .runway-taskname{
+    width:220px;min-width:220px;flex-shrink:0;border-right:1px solid var(--line);
+    padding:12px 14px;position:sticky;left:0;background:var(--paper-raised);z-index:1;
+  }
+  .runway-taskname .t-title{font-size:13.5px;font-weight:600;margin-bottom:3px;}
+  .runway-taskname .t-project{font-size:11.5px;color:var(--ink-soft);
+    display:inline-flex;align-items:center;gap:5px;}
+  .runway-taskname .t-project .sw{width:7px;height:7px;border-radius:2px;}
+  .runway-lane{position:relative;flex:1;background-image:repeating-linear-gradient(to right, transparent, transparent 37px, var(--line) 37px, var(--line) 38px);}
+  .runway-lane .lane-inner{position:relative;height:100%;min-height:52px;}
+  .runway-bar{
+    position:absolute;top:12px;height:26px;border-radius:6px;
+    display:flex;align-items:center;padding:0 8px;overflow:hidden;
+    box-shadow:0 1px 2px rgba(0,0,0,.08);cursor:pointer;
+  }
+  .runway-bar .fill{position:absolute;left:0;top:0;bottom:0;background:rgba(255,255,255,.35);}
+  .runway-bar span{position:relative;font-size:11px;font-weight:600;color:#fff;white-space:nowrap;}
+
+  /* ===== Board view ===== */
+  .board{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .board-col{background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px;min-height:200px;box-shadow:var(--shadow);}
+  .board-col h4{
+    font-family:'IBM Plex Mono';font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--ink-soft);margin:2px 6px 12px;display:flex;justify-content:space-between;align-items:center;
+  }
+  .board-col h4 .count{background:var(--grey-chip);color:var(--ink);border-radius:999px;
+    padding:1px 8px;font-size:11px;}
+  .card{
+    background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:11px 12px;
+    margin-bottom:9px;cursor:pointer;transition:.15s;
+  }
+  .card:hover{border-color:var(--accent);transform:translateY(-1px);}
+  .card .c-title{font-size:13.5px;font-weight:600;margin-bottom:6px;}
+  .card .c-meta{display:flex;justify-content:space-between;align-items:center;gap:6px;}
+  .chip{font-size:10.5px;padding:2px 8px;border-radius:999px;font-weight:500;white-space:nowrap;}
+  .chip.pr-high{background:var(--red-soft);color:var(--red);}
+  .chip.pr-med{background:var(--amber-soft);color:var(--amber);}
+  .chip.pr-low{background:var(--green-soft);color:var(--green);}
+  .card .c-date{font-family:'IBM Plex Mono';font-size:10.5px;color:var(--ink-soft);}
+  .card .mini-track{height:4px;background:var(--grey-chip);border-radius:3px;margin-top:8px;overflow:hidden;}
+  .card .mini-fill{height:100%;background:var(--accent);}
+  .card.overdue{border-left:3px solid var(--red);}
+
+  /* ===== List view ===== */
+  table.tasklist{width:100%;border-collapse:collapse;background:var(--paper-raised);
+    border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+  table.tasklist th{
+    text-align:left;font-family:'IBM Plex Mono';font-size:11px;text-transform:uppercase;
+    letter-spacing:.06em;color:var(--ink-soft);padding:11px 14px;border-bottom:1px solid var(--line);
+    background:#FBFAF6;
+  }
+  table.tasklist td{padding:11px 14px;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:middle;}
+  table.tasklist tr:last-child td{border-bottom:none;}
+  table.tasklist tr:hover td{background:#FCFBF8;}
+  .status-pill{font-size:11px;padding:3px 10px;border-radius:999px;font-weight:600;}
+  .status-todo{background:var(--grey-chip);color:var(--ink-soft);}
+  .status-doing{background:var(--accent-soft);color:var(--accent);}
+  .status-done{background:var(--green-soft);color:var(--green);}
+  .row-progress{display:flex;align-items:center;gap:8px;}
+  .row-progress .bar-track{flex:1;margin:0;}
+  .icon-btn{background:none;border:none;cursor:pointer;color:var(--ink-soft);padding:4px;border-radius:6px;}
+  .icon-btn:hover{background:var(--grey-chip);color:var(--ink);}
+
+  /* ===== Modal ===== */
+  .overlay{
+    position:fixed;inset:0;background:rgba(32,35,43,.4);display:none;
+    align-items:center;justify-content:center;z-index:50;padding:20px;
+  }
+  .overlay.open{display:flex;}
+  .modal{
+    background:var(--paper-raised);border-radius:14px;width:100%;max-width:460px;
+    padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25);
+  }
+  .modal h3{font-family:'Space Grotesk';margin:0 0 16px;font-size:19px;}
+  .field{margin-bottom:13px;}
+  .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-weight:500;}
+  .field input, .field select{
+    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;
+    font-family:'IBM Plex Sans';font-size:13.5px;background:var(--paper);color:var(--ink);
+  }
+  .field-row{display:flex;gap:10px;}
+  .field-row .field{flex:1;}
+  .modal-actions{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:10px;}
+  .btn-secondary{
+    background:none;border:1px solid var(--line);padding:9px 15px;border-radius:8px;
+    cursor:pointer;font-size:13px;color:var(--ink-soft);font-weight:500;
+  }
+  .btn-danger{color:var(--red);border-color:var(--red-soft);}
+  .btn-primary{
+    background:var(--ink);color:#fff;border:none;padding:9px 18px;border-radius:8px;
+    cursor:pointer;font-size:13px;font-weight:600;
+  }
+  .range-row{display:flex;align-items:center;gap:8px;}
+  .range-row input[type=range]{flex:1;accent-color:var(--accent);}
+  .range-val{font-family:'IBM Plex Mono';font-size:12.5px;min-width:34px;text-align:right;}
+
+  .note{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+  .footer-note{
+    text-align:center;color:var(--ink-soft);font-size:11.5px;margin-top:30px;
+    font-family:'IBM Plex Mono';
+  }
+  @media (max-width:760px){
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .board{grid-template-columns:1fr;}
+    table.tasklist{font-size:12px;}
+    .field-row{flex-direction:column;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="app-head">
+    <div class="brand">
+      <div class="eyebrow">Bảng điều phối công việc</div>
+      <h1>Lịch trình &amp; Tiến độ công việc</h1>
+    </div>
+    <div class="today-tag"><span class="dot"></span><span id="todayLabel"></span></div>
+  </header>
+
+  <div class="stats" id="statsRow"></div>
+
+  <div class="toolbar">
+    <div class="tabs" id="viewTabs">
+      <div class="tab active" data-view="runway">Dòng thời gian</div>
+      <div class="tab" data-view="board">Bảng Kanban</div>
+      <div class="tab" data-view="list">Danh sách</div>
+    </div>
+    <div class="toolbar-right">
+      <select class="filter" id="filterProject"></select>
+      <select class="filter" id="filterStatus">
+        <option value="all">Tất cả trạng thái</option>
+        <option value="todo">Chưa làm</option>
+        <option value="doing">Đang làm</option>
+        <option value="done">Hoàn thành</option>
+      </select>
+      <button class="btn-secondary" id="exportBtn">⬇ Xuất Excel</button>
+      <button class="btn-add" id="openAdd">+ Thêm công việc</button>
+    </div>
+  </div>
+
+  <div id="viewRoot"></div>
+
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="modalTitle">Thêm công việc</h3>
+    <div class="field">
+      <label>Tên công việc</label>
+      <input type="text" id="f-title" placeholder="VD: Thiết kế bộ nhận diện thương hiệu">
+    </div>
+    <div class="field">
+      <label>Dự án / Nhóm</label>
+      <input type="text" id="f-project" placeholder="VD: Dự án A">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Ngày bắt đầu</label>
+        <input type="date" id="f-start">
+      </div>
+      <div class="field">
+        <label>Hạn hoàn thành</label>
+        <input type="date" id="f-due">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Mức ưu tiên</label>
+        <select id="f-priority">
+          <option value="low">Thấp</option>
+          <option value="med" selected>Trung bình</option>
+          <option value="high">Cao</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Trạng thái</label>
+        <select id="f-status">
+          <option value="todo">Chưa làm</option>
+          <option value="doing" selected>Đang làm</option>
+          <option value="done">Hoàn thành</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Tiến độ</label>
+      <div class="range-row">
+        <input type="range" id="f-progress" min="0" max="100" value="0">
+        <span class="range-val" id="f-progress-val">0%</span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary btn-danger" id="deleteBtn" style="display:none;">Xoá</button>
+      <div style="flex:1"></div>
+      <button class="btn-secondary" id="cancelBtn">Huỷ</button>
+      <button class="btn-primary" id="saveBtn">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'tasks-v1';
+  const PROJECT_COLORS = ['#3457D5','#C9840A','#2F7D5C','#8E4EC6','#C13F3F','#0E7C86','#A6570E'];
+  let tasks = [];
+  let currentView = 'runway';
+  let editingId = null;
+
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+  function fmtDate(d){
+    return new Date(d+'T00:00:00').toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'});
+  }
+  function todayStr(){
+    const d = new Date();
+    return d.toISOString().slice(0,10);
+  }
+  function daysBetween(a,b){
+    return Math.round((new Date(b+'T00:00:00') - new Date(a+'T00:00:00'))/86400000);
+  }
+  function projectColor(name){
+    let hash=0;
+    for(let i=0;i<name.length;i++) hash = name.charCodeAt(i) + ((hash<<5)-hash);
+    return PROJECT_COLORS[Math.abs(hash) % PROJECT_COLORS.length];
+  }
+  function uid(){ return 't_' + Math.random().toString(36).slice(2,10); }
+
+  async function loadTasks(){
+    try{
+      const res = await window.storage.get(STORAGE_KEY, false);
+      tasks = res && res.value ? JSON.parse(res.value) : seedTasks();
+      if(!res){ await saveTasks(); }
+    }catch(e){
+      tasks = seedTasks();
+      await saveTasks();
+    }
+    render();
+  }
+  async function saveTasks(){
+    try{
+      await window.storage.set(STORAGE_KEY, JSON.stringify(tasks), false);
+    }catch(e){ console.error('Storage lỗi:', e); }
+  }
+
+  function seedTasks(){
+    const t = todayStr();
+    const off = (n) => { const d=new Date(); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+    return [
+      {id:uid(), title:'Xây dựng bộ nhận diện thương hiệu', project:'Sản phẩm mới', start:off(-2), due:off(4), priority:'high', status:'doing', progress:55},
+      {id:uid(), title:'Thiết kế bài đăng mạng xã hội tuần', project:'Social Media', start:off(0), due:off(2), priority:'med', status:'todo', progress:0},
+      {id:uid(), title:'In ấn brochure sự kiện', project:'Print', start:off(-5), due:off(-1), priority:'high', status:'doing', progress:80},
+      {id:uid(), title:'Tái định vị thương hiệu sản phẩm', project:'Repositioning', start:off(1), due:off(9), priority:'med', status:'todo', progress:0},
+      {id:uid(), title:'Duyệt bản in danh thiếp', project:'Print', start:off(-6), due:off(-3), priority:'low', status:'done', progress:100},
+    ];
+  }
+
+  // ---------- Stats ----------
+  function renderStats(){
+    const total = tasks.length;
+    const done = tasks.filter(t=>t.status==='done').length;
+    const doing = tasks.filter(t=>t.status==='doing').length;
+    const overdue = tasks.filter(t=> t.status!=='done' && t.due < todayStr()).length;
+    const pct = total ? Math.round(done/total*100) : 0;
+
+    $('#statsRow').innerHTML = `
+      <div class="stat-card accent">
+        <div class="num">${total}</div>
+        <div class="lbl">Tổng công việc</div>
+      </div>
+      <div class="stat-card">
+        <div class="num">${pct}%</div>
+        <div class="lbl">Hoàn thành</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="stat-card amber">
+        <div class="num">${doing}</div>
+        <div class="lbl">Đang thực hiện</div>
+      </div>
+      <div class="stat-card red">
+        <div class="num">${overdue}</div>
+        <div class="lbl">Quá hạn</div>
+      </div>
+    `;
+  }
+
+  // ---------- Filters ----------
+  function currentFilters(){
+    return {
+      project: $('#filterProject').value,
+      status: $('#filterStatus').value
+    };
+  }
+  function filteredTasks(){
+    const f = currentFilters();
+    return tasks.filter(t=>
+      (f.project==='all' || t.project===f.project) &&
+      (f.status==='all' || t.status===f.status)
+    );
+  }
+  function renderProjectFilter(){
+    const sel = $('#filterProject');
+    const projects = Array.from(new Set(tasks.map(t=>t.project))).sort();
+    const cur = sel.value || 'all';
+    sel.innerHTML = `<option value="all">Tất cả dự án</option>` +
+      projects.map(p=>`<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+    if(projects.includes(cur)) sel.value = cur;
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ---------- Views ----------
+  function render(){
+    renderStats();
+    renderProjectFilter();
+    const root = $('#viewRoot');
+    const list = filteredTasks();
+    if(tasks.length === 0){
+      root.innerHTML = `<div class="empty"><h3>Chưa có công việc nào</h3><p>Nhấn "Thêm công việc" để bắt đầu lên lịch trình của bạn.</p></div>`;
+      return;
+    }
+    if(list.length === 0){
+      root.innerHTML = `<div class="empty"><h3>Không có kết quả</h3><p>Thử đổi bộ lọc dự án hoặc trạng thái.</p></div>`;
+      return;
+    }
+    if(currentView === 'runway') renderRunway(root, list);
+    else if(currentView === 'board') renderBoard(root, list);
+    else renderList(root, list);
+  }
+
+  function renderRunway(root, list){
+    const today = todayStr();
+    let minStart = list.reduce((m,t)=> t.start<m?t.start:m, list[0].start);
+    let maxDue = list.reduce((m,t)=> t.due>m?t.due:m, list[0].due);
+    // pad window: 2 days before min, 3 after max, and always include today
+    if(today < minStart) minStart = today;
+    if(today > maxDue) maxDue = today;
+    const start = new Date(minStart+'T00:00:00'); start.setDate(start.getDate()-2);
+    const end = new Date(maxDue+'T00:00:00'); end.setDate(end.getDate()+3);
+    const totalDays = Math.max(1, Math.round((end-start)/86400000)+1);
+    const dow = ['CN','T2','T3','T4','T5','T6','T7'];
+
+    let daysHtml = '';
+    for(let i=0;i<totalDays;i++){
+      const d = new Date(start); d.setDate(d.getDate()+i);
+      const ds = d.toISOString().slice(0,10);
+      const isToday = ds === today;
+      const isWeekend = d.getDay()===0 || d.getDay()===6;
+      daysHtml += `<div class="runway-day ${isToday?'today':''} ${isWeekend?'weekend':''}">
+        <span class="dow">${dow[d.getDay()]}</span>${d.getDate()}
+      </div>`;
+    }
+
+    let rowsHtml = '';
+    list.forEach(t=>{
+      const s = new Date(t.start+'T00:00:00');
+      const offsetDays = Math.round((s-start)/86400000);
+      const spanDays = Math.max(1, daysBetween(t.start, t.due)+1);
+      const color = t.status==='done' ? '#2F7D5C' : (t.priority==='high' ? '#C13F3F' : projectColor(t.project));
+      const left = offsetDays*38;
+      const width = spanDays*38 - 4;
+      const fillPct = t.status==='done' ? 100 : t.progress;
+      rowsHtml += `
+        <div class="runway-row">
+          <div class="runway-taskname">
+            <div class="t-title">${escapeHtml(t.title)}</div>
+            <div class="t-project"><span class="sw" style="background:${projectColor(t.project)}"></span>${escapeHtml(t.project)}</div>
+          </div>
+          <div class="runway-lane" style="min-width:${totalDays*38}px;">
+            <div class="lane-inner">
+              <div class="runway-bar" data-id="${t.id}" style="left:${left}px;width:${width}px;background:${color};">
+                <div class="fill" style="width:${fillPct}%;"></div>
+                <span>${t.progress}%</span>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    });
+
+    root.innerHTML = `
+      <div class="runway">
+        <div class="runway-scroll">
+          <div style="min-width:${220+totalDays*38}px;">
+            <div class="runway-head">
+              <div class="runway-labelcol">Công việc</div>
+              <div class="runway-days">${daysHtml}</div>
+            </div>
+            ${rowsHtml}
+          </div>
+        </div>
+      </div>
+    `;
+    $$('.runway-bar', root).forEach(el=>{
+      el.addEventListener('click', ()=> openModal(el.dataset.id));
+    });
+  }
+
+  function renderBoard(root, list){
+    const cols = [
+      {key:'todo', label:'Chưa làm'},
+      {key:'doing', label:'Đang làm'},
+      {key:'done', label:'Hoàn thành'}
+    ];
+    root.innerHTML = `<div class="board">${cols.map(c=>{
+      const items = list.filter(t=>t.status===c.key);
+      return `
+        <div class="board-col">
+          <h4>${c.label} <span class="count">${items.length}</span></h4>
+          ${items.map(t=>{
+            const overdue = t.status!=='done' && t.due < todayStr();
+            const prClass = t.priority==='high'?'pr-high':t.priority==='med'?'pr-med':'pr-low';
+            const prLabel = t.priority==='high'?'Cao':t.priority==='med'?'TB':'Thấp';
+            return `
+              <div class="card ${overdue?'overdue':''}" data-id="${t.id}">
+                <div class="c-title">${escapeHtml(t.title)}</div>
+                <div class="c-meta">
+                  <span class="chip ${prClass}">${prLabel}</span>
+                  <span class="c-date">${fmtDate(t.start)} → ${fmtDate(t.due)}</span>
+                </div>
+                <div class="mini-track"><div class="mini-fill" style="width:${t.progress}%"></div></div>
+              </div>`;
+          }).join('') || `<div style="font-size:12px;color:var(--ink-soft);padding:10px 4px;">Không có công việc</div>`}
+        </div>`;
+    }).join('')}</div>`;
+    $$('.card', root).forEach(el=> el.addEventListener('click', ()=> openModal(el.dataset.id)));
+  }
+
+  function renderList(root, list){
+    const sorted = [...list].sort((a,b)=> a.due.localeCompare(b.due));
+    root.innerHTML = `
+      <table class="tasklist">
+        <thead><tr>
+          <th>Công việc</th><th>Dự án</th><th>Bắt đầu</th><th>Hạn</th>
+          <th>Ưu tiên</th><th>Trạng thái</th><th>Tiến độ</th><th></th>
+        </tr></thead>
+        <tbody>
+          ${sorted.map(t=>{
+            const overdue = t.status!=='done' && t.due < todayStr();
+            const prLabel = t.priority==='high'?'Cao':t.priority==='med'?'TB':'Thấp';
+            const stLabel = t.status==='todo'?'Chưa làm':t.status==='doing'?'Đang làm':'Hoàn thành';
+            return `
+            <tr>
+              <td>${escapeHtml(t.title)}</td>
+              <td><span class="t-project"><span class="sw" style="display:inline-block;width:7px;height:7px;border-radius:2px;background:${projectColor(t.project)};margin-right:5px;"></span>${escapeHtml(t.project)}</span></td>
+              <td>${fmtDate(t.start)}</td>
+              <td style="color:${overdue?'var(--red)':'inherit'};font-weight:${overdue?'600':'400'};">${fmtDate(t.due)}${overdue?' ⚠':''}</td>
+              <td>${prLabel}</td>
+              <td><span class="status-pill status-${t.status}">${stLabel}</span></td>
+              <td><div class="row-progress"><div class="bar-track"><div class="bar-fill" style="width:${t.progress}%"></div></div><span style="font-family:'IBM Plex Mono';font-size:11px;">${t.progress}%</span></div></td>
+              <td><button class="icon-btn" data-id="${t.id}" title="Sửa">✎</button></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+    $$('.icon-btn', root).forEach(el=> el.addEventListener('click', ()=> openModal(el.dataset.id)));
+    $$('table.tasklist tbody tr', root).forEach(row=>{
+      row.addEventListener('click', (e)=>{
+        if(e.target.closest('.icon-btn')) return;
+        const btn = row.querySelector('.icon-btn');
+        if(btn) openModal(btn.dataset.id);
+      });
+    });
+  }
+
+  // ---------- Modal ----------
+  function openModal(id){
+    editingId = id || null;
+    const t = id ? tasks.find(x=>x.id===id) : null;
+    $('#modalTitle').textContent = t ? 'Sửa công việc' : 'Thêm công việc';
+    $('#f-title').value = t ? t.title : '';
+    $('#f-project').value = t ? t.project : '';
+    $('#f-start').value = t ? t.start : todayStr();
+    $('#f-due').value = t ? t.due : todayStr();
+    $('#f-priority').value = t ? t.priority : 'med';
+    $('#f-status').value = t ? t.status : 'todo';
+    $('#f-progress').value = t ? t.progress : 0;
+    $('#f-progress-val').textContent = (t? t.progress:0) + '%';
+    $('#deleteBtn').style.display = t ? 'inline-block' : 'none';
+    $('#overlay').classList.add('open');
+    $('#f-title').focus();
+  }
+  function closeModal(){
+    $('#overlay').classList.remove('open');
+    editingId = null;
+  }
+
+  async function saveFromModal(){
+    const title = $('#f-title').value.trim();
+    if(!title){ $('#f-title').focus(); return; }
+    let project = $('#f-project').value.trim() || 'Chưa phân loại';
+    let start = $('#f-start').value || todayStr();
+    let due = $('#f-due').value || start;
+    if(due < start) due = start;
+    const priority = $('#f-priority').value;
+    let status = $('#f-status').value;
+    const progress = parseInt($('#f-progress').value,10);
+    if(progress === 100) status = 'done';
+
+    if(editingId){
+      const t = tasks.find(x=>x.id===editingId);
+      Object.assign(t, {title, project, start, due, priority, status, progress});
+    } else {
+      tasks.push({id:uid(), title, project, start, due, priority, status, progress});
+    }
+    await saveTasks();
+    closeModal();
+    render();
+  }
+
+  async function deleteTask(){
+    if(!editingId) return;
+    tasks = tasks.filter(t=>t.id !== editingId);
+    await saveTasks();
+    closeModal();
+    render();
+  }
+
+  // ---------- Excel export ----------
+  function statusLabel(s){ return s==='todo'?'Chưa làm':s==='doing'?'Đang làm':'Hoàn thành'; }
+  function priorityLabel(p){ return p==='high'?'Cao':p==='med'?'Trung bình':'Thấp'; }
+
+  function taskRow(t){
+    const overdue = t.status!=='done' && t.due < todayStr();
+    return {
+      'Tên công việc': t.title,
+      'Dự án': t.project,
+      'Ngày bắt đầu': t.start,
+      'Hạn hoàn thành': t.due,
+      'Mức ưu tiên': priorityLabel(t.priority),
+      'Trạng thái': statusLabel(t.status),
+      'Tiến độ (%)': t.progress,
+      'Quá hạn': overdue ? 'Có' : 'Không'
+    };
+  }
+
+  function exportToExcel(){
+    if(typeof XLSX === 'undefined'){
+      alert('Không thể tải thư viện xuất Excel. Vui lòng kiểm tra kết nối mạng và thử lại.');
+      return;
+    }
+    if(tasks.length === 0){
+      alert('Chưa có công việc nào để xuất.');
+      return;
+    }
+    const wb = XLSX.utils.book_new();
+
+    // Sheet 1: Tổng quan
+    const total = tasks.length;
+    const done = tasks.filter(t=>t.status==='done').length;
+    const doing = tasks.filter(t=>t.status==='doing').length;
+    const todo = tasks.filter(t=>t.status==='todo').length;
+    const overdue = tasks.filter(t=> t.status!=='done' && t.due < todayStr()).length;
+    const projects = Array.from(new Set(tasks.map(t=>t.project))).sort();
+
+    const overviewRows = [
+      {'Chỉ số': 'Tổng số công việc', 'Giá trị': total},
+      {'Chỉ số': 'Đã hoàn thành', 'Giá trị': done},
+      {'Chỉ số': 'Đang thực hiện', 'Giá trị': doing},
+      {'Chỉ số': 'Chưa làm', 'Giá trị': todo},
+      {'Chỉ số': 'Quá hạn', 'Giá trị': overdue},
+      {'Chỉ số': 'Tỷ lệ hoàn thành', 'Giá trị': total ? Math.round(done/total*100)+'%' : '0%'},
+      {'Chỉ số': '', 'Giá trị': ''},
+      {'Chỉ số': 'Số công việc theo dự án', 'Giá trị': ''},
+    ];
+    projects.forEach(p=>{
+      overviewRows.push({'Chỉ số': '— ' + p, 'Giá trị': tasks.filter(t=>t.project===p).length});
+    });
+    const wsOverview = XLSX.utils.json_to_sheet(overviewRows, {skipHeader:false});
+    wsOverview['!cols'] = [{wch:28},{wch:16}];
+    XLSX.utils.book_append_sheet(wb, wsOverview, 'Tổng quan');
+
+    // Sheet 2: Toàn bộ công việc
+    const allSorted = [...tasks].sort((a,b)=> a.due.localeCompare(b.due));
+    const wsAll = XLSX.utils.json_to_sheet(allSorted.map(taskRow));
+    wsAll['!cols'] = [{wch:32},{wch:18},{wch:12},{wch:14},{wch:12},{wch:12},{wch:12},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, wsAll, 'Toàn bộ công việc');
+
+    // Sheet per status
+    const statusGroups = [
+      {key:'todo', name:'Chưa làm'},
+      {key:'doing', name:'Đang làm'},
+      {key:'done', name:'Hoàn thành'}
+    ];
+    statusGroups.forEach(g=>{
+      const rows = tasks.filter(t=>t.status===g.key)
+        .sort((a,b)=> a.due.localeCompare(b.due))
+        .map(taskRow);
+      const ws = rows.length ? XLSX.utils.json_to_sheet(rows) : XLSX.utils.json_to_sheet([{'Ghi chú':'Không có công việc'}]);
+      ws['!cols'] = [{wch:32},{wch:18},{wch:12},{wch:14},{wch:12},{wch:12},{wch:12},{wch:10}];
+      XLSX.utils.book_append_sheet(wb, ws, g.name);
+    });
+
+    // Sheet per project
+    projects.forEach(p=>{
+      const rows = tasks.filter(t=>t.project===p)
+        .sort((a,b)=> a.due.localeCompare(b.due))
+        .map(taskRow);
+      const safeName = p.replace(/[\\\/\?\*\[\]:]/g,'').slice(0,28) || 'Dự án';
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws['!cols'] = [{wch:32},{wch:18},{wch:12},{wch:14},{wch:12},{wch:12},{wch:12},{wch:10}];
+      XLSX.utils.book_append_sheet(wb, ws, safeName);
+    });
+
+    const dateStr = todayStr();
+    XLSX.writeFile(wb, `lich-trinh-cong-viec_${dateStr}.xlsx`);
+  }
+
+  // ---------- Events ----------
+  $('#exportBtn').addEventListener('click', exportToExcel);
+  $('#openAdd').addEventListener('click', ()=> openModal(null));
+  $('#cancelBtn').addEventListener('click', closeModal);
+  $('#saveBtn').addEventListener('click', saveFromModal);
+  $('#deleteBtn').addEventListener('click', deleteTask);
+  $('#overlay').addEventListener('click', (e)=>{ if(e.target.id==='overlay') closeModal(); });
+  $('#f-progress').addEventListener('input', (e)=>{ $('#f-progress-val').textContent = e.target.value + '%'; });
+  $('#filterProject').addEventListener('change', render);
+  $('#filterStatus').addEventListener('change', render);
+  $$('.tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      $$('.tab').forEach(x=>x.classList.remove('active'));
+      tab.classList.add('active');
+      currentView = tab.dataset.view;
+      render();
+    });
+  });
+
+  $('#todayLabel').textContent = new Date().toLocaleDateString('vi-VN',{weekday:'long', day:'2-digit', month:'2-digit', year:'numeric'});
+
+  loadTasks();
+})();
+</script>
+</body>
+</html>
