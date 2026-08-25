@@ -286,7 +286,7 @@
   .subtask-del{color:var(--red);flex-shrink:0;}
   .subtask-add-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
   .subtask-add-row input[type="text"]{flex:1;min-width:140px;}
-  .subtask-add-row input[type="date"]{width:128px;}
+  .subtask-add-row input.date-text{width:128px;}
   .subtask-add-row button{
     font-family:var(--font-main);font-weight:600;font-size:12.5px;background:var(--ink);color:#fff;
     border:none;padding:0 16px;border-radius:8px;cursor:pointer;white-space:nowrap;
@@ -403,11 +403,11 @@
       <div class="field-row">
         <div class="field">
           <label>Start Date</label>
-          <input type="date" id="f-start">
+          <input type="text" id="f-start" class="date-text" placeholder="dd/mm/yy" inputmode="numeric" maxlength="8">
         </div>
         <div class="field">
           <label>Due Date</label>
-          <input type="date" id="f-due">
+          <input type="text" id="f-due" class="date-text" placeholder="dd/mm/yy" inputmode="numeric" maxlength="8">
         </div>
       </div>
       <div class="field-row">
@@ -437,7 +437,7 @@
           <div id="subtaskList"></div>
           <div class="subtask-add-row">
             <input type="text" id="newSubtaskTitle" placeholder="Subtask name">
-            <input type="date" id="newSubtaskDue">
+            <input type="text" id="newSubtaskDue" class="date-text" placeholder="dd/mm/yy" inputmode="numeric" maxlength="8">
             <button type="button" id="addSubtaskBtn">+ Add</button>
           </div>
           <div class="note">The main task's due date will automatically extend if a subtask has a later due date.</div>
@@ -528,6 +528,32 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     const hh = pad2(dt.getHours());
     const min = pad2(dt.getMinutes());
     return `${dd}/${mm}/${yy} ${hh}:${min}`;
+  }
+  // Parse a "dd/mm/yy" (or "dd/mm/yyyy") text input into an ISO "yyyy-mm-dd" string.
+  // Returns '' for empty input, or null if the text isn't a valid date.
+  function parseDMY(str){
+    if(!str) return '';
+    const trimmed = str.trim();
+    if(!trimmed) return '';
+    const m = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
+    if(!m) return null;
+    let [, dd, mm, yy] = m;
+    dd = parseInt(dd,10); mm = parseInt(mm,10);
+    let yyyy = yy.length === 2 ? 2000 + parseInt(yy,10) : parseInt(yy,10);
+    if(mm < 1 || mm > 12) return null;
+    const daysInMonth = new Date(yyyy, mm, 0).getDate();
+    if(dd < 1 || dd > daysInMonth) return null;
+    return `${yyyy}-${pad2(mm)}-${pad2(dd)}`;
+  }
+  // Auto-insert "/" as the user types digits into a dd/mm/yy field.
+  function attachDateAutoFormat(el){
+    el.addEventListener('input', ()=>{
+      let digits = el.value.replace(/\D/g,'').slice(0,6);
+      let out = digits;
+      if(digits.length > 4) out = `${digits.slice(0,2)}/${digits.slice(2,4)}/${digits.slice(4)}`;
+      else if(digits.length > 2) out = `${digits.slice(0,2)}/${digits.slice(2)}`;
+      el.value = out;
+    });
   }
   function nowISO(){ return new Date().toISOString(); }
   function todayStr(){
@@ -706,7 +732,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
           <input type="checkbox" data-sub="${s.id}" ${s.done?'checked':''}>
           <span>${escapeHtml(s.title)}</span>
         </label>
-        <input type="date" class="subtask-due" data-sub-due="${s.id}" value="${s.due||''}">
+        <input type="text" class="subtask-due date-text" placeholder="dd/mm/yy" inputmode="numeric" maxlength="8" data-sub-due="${s.id}" value="${s.due?fmtDate(s.due):''}">
         <button type="button" class="icon-btn subtask-del" data-sub-del="${s.id}" title="Delete subtask">✕</button>
       </div>
     `).join('') : `<div class="empty-hint">No subtasks yet.</div>`;
@@ -715,7 +741,12 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
       cb.addEventListener('change', ()=> toggleSubtaskDone(cb.dataset.sub));
     });
     $$('#subtaskList .subtask-due').forEach(inp=>{
-      inp.addEventListener('change', ()=> updateSubtaskDue(inp.dataset.subDue, inp.value));
+      attachDateAutoFormat(inp);
+      inp.addEventListener('change', ()=>{
+        const parsed = parseDMY(inp.value);
+        if(parsed === null){ alert('Invalid date. Please use the dd/mm/yy format.'); inp.focus(); return; }
+        updateSubtaskDue(inp.dataset.subDue, parsed);
+      });
     });
     $$('#subtaskList .subtask-del').forEach(btn=>{
       btn.addEventListener('click', ()=> deleteSubtask(btn.dataset.subDel));
@@ -750,7 +781,9 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     const dueInput = $('#newSubtaskDue');
     const title = titleInput.value.trim();
     if(!title){ titleInput.focus(); return; }
-    const due = dueInput.value || '';
+    const dueParsed = parseDMY(dueInput.value);
+    if(dueParsed === null){ alert('Subtask due date is invalid. Please use the dd/mm/yy format.'); dueInput.focus(); return; }
+    const due = dueParsed || '';
     const sub = {id:uid(), title, due, done:false};
     t.subtasks = [...(t.subtasks||[]), sub];
     addActivity(t, `Added subtask "${title}"${due?` (due ${fmtDate(due)})`:''}.`);
@@ -759,7 +792,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     if(ok){
       titleInput.value=''; dueInput.value='';
       renderModalExtra(t);
-      if(extended) $('#f-due').value = t.due;
+      if(extended) $('#f-due').value = fmtDate(t.due);
       render();
     }
   }
@@ -787,7 +820,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     const ok = await persistTaskExtra(t);
     if(ok){
       renderModalExtra(t);
-      if(extended) $('#f-due').value = t.due;
+      if(extended) $('#f-due').value = fmtDate(t.due);
       render();
     }
   }
@@ -1119,8 +1152,8 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     $('#f-title').value = t ? t.title : '';
     $('#f-project').value = t ? t.project : '';
     $('#f-desc').value = t ? (t.description || '') : '';
-    $('#f-start').value = t ? t.start : todayStr();
-    $('#f-due').value = t ? t.due : todayStr();
+    $('#f-start').value = fmtDate(t ? t.start : todayStr());
+    $('#f-due').value = fmtDate(t ? t.due : todayStr());
     $('#f-priority').value = t ? t.priority : 'med';
     $('#f-status').value = t ? t.status : 'todo';
     $('#deleteBtn').style.display = t ? 'inline-block' : 'none';
@@ -1152,8 +1185,12 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     if(!title){ $('#f-title').focus(); return; }
     let project = $('#f-project').value.trim() || 'Uncategorized';
     const description = $('#f-desc').value.trim();
-    let start = $('#f-start').value || todayStr();
-    let due = $('#f-due').value || start;
+    const startParsed = parseDMY($('#f-start').value);
+    const dueParsed = parseDMY($('#f-due').value);
+    if(startParsed === null){ alert('Start date is invalid. Please use the dd/mm/yy format.'); $('#f-start').focus(); return; }
+    if(dueParsed === null){ alert('Due date is invalid. Please use the dd/mm/yy format.'); $('#f-due').focus(); return; }
+    let start = startParsed || todayStr();
+    let due = dueParsed || start;
     if(due < start) due = start;
     const priority = $('#f-priority').value;
     let status = $('#f-status').value;
@@ -1330,6 +1367,9 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
   }
 
   // ---------- Events ----------
+  attachDateAutoFormat($('#f-start'));
+  attachDateAutoFormat($('#f-due'));
+  attachDateAutoFormat($('#newSubtaskDue'));
   $('#exportBtn').addEventListener('click', exportToExcel);
   $('#openAdd').addEventListener('click', ()=> openModal(null));
   $('#cancelBtn').addEventListener('click', closeModal);
