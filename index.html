@@ -339,8 +339,8 @@
   // 1. Tạo project miễn phí tại https://supabase.com
   // 2. Vào SQL Editor, chạy đoạn SQL tạo bảng "tasks" (xem hướng dẫn đi kèm)
   // 3. Vào Project Settings → API, copy "Project URL" và "anon public key" dán vào 2 dòng dưới đây
-  const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+  const SUPABASE_URL = 'https://gqvkdyfoqypkycrbtxwg.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_D6W_s3jVs60xBuEdfuWjUg_ak6hBQgg';
   const BACKEND_READY = !SUPABASE_URL.includes('YOUR_SUPABASE_URL') && !SUPABASE_ANON_KEY.includes('YOUR_SUPABASE_ANON_KEY');
   const db = (BACKEND_READY && window.supabase) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
