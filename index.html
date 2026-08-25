@@ -172,8 +172,6 @@
   .chip.pr-med{background:var(--amber-soft);color:var(--amber);}
   .chip.pr-low{background:var(--green-soft);color:var(--green);}
   .card .c-date{font-family:'IBM Plex Mono';font-size:10.5px;color:var(--ink-soft);}
-  .card .mini-track{height:4px;background:var(--grey-chip);border-radius:3px;margin-top:8px;overflow:hidden;}
-  .card .mini-fill{height:100%;background:var(--accent);}
   .card.overdue{border-left:3px solid var(--red);}
 
   /* ===== List view ===== */
@@ -191,8 +189,6 @@
   .status-todo{background:var(--grey-chip);color:var(--ink-soft);}
   .status-doing{background:var(--accent-soft);color:var(--accent);}
   .status-done{background:var(--green-soft);color:var(--green);}
-  .row-progress{display:flex;align-items:center;gap:8px;}
-  .row-progress .bar-track{flex:1;margin:0;}
   .icon-btn{background:none;border:none;cursor:pointer;color:var(--ink-soft);padding:4px;border-radius:6px;}
   .icon-btn:hover{background:var(--grey-chip);color:var(--ink);}
 
@@ -225,9 +221,6 @@
     background:var(--ink);color:#fff;border:none;padding:9px 18px;border-radius:8px;
     cursor:pointer;font-size:13px;font-weight:600;
   }
-  .range-row{display:flex;align-items:center;gap:8px;}
-  .range-row input[type=range]{flex:1;accent-color:var(--accent);}
-  .range-val{font-family:'IBM Plex Mono';font-size:12.5px;min-width:34px;text-align:right;}
 
   .note{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
   .footer-note{
@@ -318,13 +311,6 @@
         </select>
       </div>
     </div>
-    <div class="field">
-      <label>Tiến độ</label>
-      <div class="range-row">
-        <input type="range" id="f-progress" min="0" max="100" value="0">
-        <span class="range-val" id="f-progress-val">0%</span>
-      </div>
-    </div>
     <div class="modal-actions">
       <button class="btn-secondary btn-danger" id="deleteBtn" style="display:none;">Xoá</button>
       <div style="flex:1"></div>
@@ -383,11 +369,11 @@
     const t = todayStr();
     const off = (n) => { const d=new Date(); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
     return [
-      {id:uid(), title:'Xây dựng bộ nhận diện thương hiệu', project:'Sản phẩm mới', start:off(-2), due:off(4), priority:'high', status:'doing', progress:55},
-      {id:uid(), title:'Thiết kế bài đăng mạng xã hội tuần', project:'Social Media', start:off(0), due:off(2), priority:'med', status:'todo', progress:0},
-      {id:uid(), title:'In ấn brochure sự kiện', project:'Print', start:off(-5), due:off(-1), priority:'high', status:'doing', progress:80},
-      {id:uid(), title:'Tái định vị thương hiệu sản phẩm', project:'Repositioning', start:off(1), due:off(9), priority:'med', status:'todo', progress:0},
-      {id:uid(), title:'Duyệt bản in danh thiếp', project:'Print', start:off(-6), due:off(-3), priority:'low', status:'done', progress:100},
+      {id:uid(), title:'Xây dựng bộ nhận diện thương hiệu', project:'Sản phẩm mới', start:off(-2), due:off(4), priority:'high', status:'doing'},
+      {id:uid(), title:'Thiết kế bài đăng mạng xã hội tuần', project:'Social Media', start:off(0), due:off(2), priority:'med', status:'todo'},
+      {id:uid(), title:'In ấn brochure sự kiện', project:'Print', start:off(-5), due:off(-1), priority:'high', status:'doing'},
+      {id:uid(), title:'Tái định vị thương hiệu sản phẩm', project:'Repositioning', start:off(1), due:off(9), priority:'med', status:'todo'},
+      {id:uid(), title:'Duyệt bản in danh thiếp', project:'Print', start:off(-6), due:off(-3), priority:'low', status:'done'},
     ];
   }
 
@@ -407,7 +393,6 @@
       <div class="stat-card">
         <div class="num">${pct}%</div>
         <div class="lbl">Hoàn thành</div>
-        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
       </div>
       <div class="stat-card amber">
         <div class="num">${doing}</div>
@@ -496,7 +481,6 @@
       const color = t.status==='done' ? '#2F7D5C' : (t.priority==='high' ? '#C13F3F' : projectColor(t.project));
       const left = offsetDays*38;
       const width = spanDays*38 - 4;
-      const fillPct = t.status==='done' ? 100 : t.progress;
       rowsHtml += `
         <div class="runway-row">
           <div class="runway-taskname">
@@ -505,10 +489,7 @@
           </div>
           <div class="runway-lane" style="min-width:${totalDays*38}px;">
             <div class="lane-inner">
-              <div class="runway-bar" data-id="${t.id}" style="left:${left}px;width:${width}px;background:${color};">
-                <div class="fill" style="width:${fillPct}%;"></div>
-                <span>${t.progress}%</span>
-              </div>
+              <div class="runway-bar" data-id="${t.id}" style="left:${left}px;width:${width}px;background:${color};"></div>
             </div>
           </div>
         </div>`;
@@ -554,7 +535,6 @@
                   <span class="chip ${prClass}">${prLabel}</span>
                   <span class="c-date">${fmtDate(t.start)} → ${fmtDate(t.due)}</span>
                 </div>
-                <div class="mini-track"><div class="mini-fill" style="width:${t.progress}%"></div></div>
               </div>`;
           }).join('') || `<div style="font-size:12px;color:var(--ink-soft);padding:10px 4px;">Không có công việc</div>`}
         </div>`;
@@ -610,8 +590,6 @@
     $('#f-due').value = t ? t.due : todayStr();
     $('#f-priority').value = t ? t.priority : 'med';
     $('#f-status').value = t ? t.status : 'todo';
-    $('#f-progress').value = t ? t.progress : 0;
-    $('#f-progress-val').textContent = (t? t.progress:0) + '%';
     $('#deleteBtn').style.display = t ? 'inline-block' : 'none';
     $('#overlay').classList.add('open');
     $('#f-title').focus();
@@ -630,14 +608,12 @@
     if(due < start) due = start;
     const priority = $('#f-priority').value;
     let status = $('#f-status').value;
-    const progress = parseInt($('#f-progress').value,10);
-    if(progress === 100) status = 'done';
 
     if(editingId){
       const t = tasks.find(x=>x.id===editingId);
-      Object.assign(t, {title, project, start, due, priority, status, progress});
+      Object.assign(t, {title, project, start, due, priority, status});
     } else {
-      tasks.push({id:uid(), title, project, start, due, priority, status, progress});
+      tasks.push({id:uid(), title, project, start, due, priority, status});
     }
     await saveTasks();
     closeModal();
@@ -665,7 +641,6 @@
       'Hạn hoàn thành': t.due,
       'Mức ưu tiên': priorityLabel(t.priority),
       'Trạng thái': statusLabel(t.status),
-      'Tiến độ (%)': t.progress,
       'Quá hạn': overdue ? 'Có' : 'Không'
     };
   }
@@ -749,7 +724,6 @@
   $('#saveBtn').addEventListener('click', saveFromModal);
   $('#deleteBtn').addEventListener('click', deleteTask);
   $('#overlay').addEventListener('click', (e)=>{ if(e.target.id==='overlay') closeModal(); });
-  $('#f-progress').addEventListener('input', (e)=>{ $('#f-progress-val').textContent = e.target.value + '%'; });
   $('#filterProject').addEventListener('change', render);
   $('#filterStatus').addEventListener('change', render);
   $$('.tab').forEach(tab=>{
