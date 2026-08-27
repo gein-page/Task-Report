@@ -80,6 +80,16 @@
   .bar-track{height:5px;background:var(--grey-chip);border-radius:4px;margin-top:12px;overflow:hidden;}
   .bar-fill{height:100%;background:var(--accent);border-radius:4px;transition:width .4s ease;}
 
+  /* Overview timeline (big table above Add Task) */
+  .overview-section{margin-bottom:28px;}
+  .overview-head{
+    display:flex;align-items:baseline;gap:12px;margin-bottom:12px;flex-wrap:wrap;
+  }
+  .overview-head h2{
+    font-family:var(--font-display);font-weight:700;font-size:18px;margin:0;letter-spacing:-0.01em;
+  }
+  .overview-sub{font-size:12.5px;color:var(--ink-soft);}
+
   /* Toolbar */
   .toolbar{
     display:flex;justify-content:space-between;align-items:center;gap:16px;
@@ -469,10 +479,17 @@
 
   <div class="stats" id="statsRow"></div>
 
+  <section class="overview-section">
+    <div class="overview-head">
+      <h2>Task Overview</h2>
+      <span class="overview-sub">All tasks across every project, plotted against their timeline</span>
+    </div>
+    <div id="overviewRoot"></div>
+  </section>
+
   <div class="toolbar">
     <div class="tabs" id="viewTabs">
-      <div class="tab active" data-view="runway">Timeline</div>
-      <div class="tab" data-view="board">Kanban Board</div>
+      <div class="tab active" data-view="board">Kanban Board</div>
       <div class="tab" data-view="list">List</div>
     </div>
     <div class="toolbar-right">
@@ -640,7 +657,7 @@ alter table tasks add column if not exists assignee text not null default '';`;
 
   const PROJECT_COLORS = ['#3457D5','#C9840A','#2F7D5C','#8E4EC6','#C13F3F','#0E7C86','#A6570E'];
   let tasks = [];
-  let currentView = 'runway';
+  let currentView = 'board';
   let editingId = null;
   let selectedIds = new Set();   // multi-selected card ids on the Kanban board
 
@@ -1287,6 +1304,16 @@ alter table tasks add column if not exists assignee text not null default '';`;
     renderProjectFilter();
     pruneSelection();
     updateBulkBar();
+
+    // Overview timeline: always shows every task (ignores the Kanban/List filters below),
+    // acting as a single big at-a-glance summary above the Add Task toolbar.
+    const overviewRoot = $('#overviewRoot');
+    if(tasks.length === 0){
+      overviewRoot.innerHTML = `<div class="empty"><h3>No tasks yet</h3><p>Click "Add Task" to start planning your schedule.</p></div>`;
+    } else {
+      renderRunway(overviewRoot, tasks);
+    }
+
     const root = $('#viewRoot');
     const list = filteredTasks();
     if(tasks.length === 0){
@@ -1297,8 +1324,7 @@ alter table tasks add column if not exists assignee text not null default '';`;
       root.innerHTML = `<div class="empty"><h3>No results</h3><p>Try changing the project or status filter.</p></div>`;
       return;
     }
-    if(currentView === 'runway') renderRunway(root, list);
-    else if(currentView === 'board') renderBoard(root, list);
+    if(currentView === 'board') renderBoard(root, list);
     else renderList(root, list);
   }
 
