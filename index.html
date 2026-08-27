@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -190,6 +189,8 @@
     font-size:12px;color:var(--ink-soft);margin:-4px 0 8px;line-height:1.4;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
   }
+  .card .c-people{font-size:11px;color:var(--ink-soft);margin:-2px 0 8px;line-height:1.5;}
+  .card .c-people b{color:var(--ink);font-weight:600;}
   .card .c-meta{display:flex;justify-content:space-between;align-items:center;gap:8px;}
   .chip{font-size:10.5px;padding:4px 8px;border-radius:999px;font-weight:500;white-space:nowrap;}
   .chip.pr-high{background:var(--red-soft);color:var(--red);}
@@ -520,6 +521,16 @@
         <label>Project / Team</label>
         <input type="text" id="f-project" placeholder="e.g. Project A">
       </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Requested By</label>
+          <input type="text" id="f-requester" placeholder="e.g. Client / Manager name">
+        </div>
+        <div class="field">
+          <label>Assigned To</label>
+          <input type="text" id="f-assignee" placeholder="e.g. Designer name">
+        </div>
+      </div>
       <div class="field">
         <label>Description</label>
         <textarea id="f-desc" rows="3" placeholder="Describe the task in detail..."></textarea>
@@ -619,11 +630,13 @@ for update using (true);
 create policy "Allow delete" on tasks
 for delete using (true);`;
 
-  // Suggested SQL to add the new columns for Subtasks / Comments / Activity Log
+  // Suggested SQL to add the new columns for Subtasks / Comments / Activity Log / Requester / Assignee
   const SCHEMA_FIX_SQL =
 `alter table tasks add column if not exists subtasks jsonb not null default '[]'::jsonb;
 alter table tasks add column if not exists comments jsonb not null default '[]'::jsonb;
-alter table tasks add column if not exists activity jsonb not null default '[]'::jsonb;`;
+alter table tasks add column if not exists activity jsonb not null default '[]'::jsonb;
+alter table tasks add column if not exists requester text not null default '';
+alter table tasks add column if not exists assignee text not null default '';`;
 
   const PROJECT_COLORS = ['#3457D5','#C9840A','#2F7D5C','#8E4EC6','#C13F3F','#0E7C86','#A6570E'];
   let tasks = [];
@@ -929,14 +942,14 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     );
   }
 
-  // Detect missing-column errors (subtasks / comments / activity) and show a fix guide
+  // Detect missing-column errors (subtasks / comments / activity / requester / assignee) and show a fix guide
   function isMissingColumnError(err){
     const msg = (err && err.message) ? err.message.toLowerCase() : '';
     return (msg.includes('column') && msg.includes('does not exist')) || err?.code === '42703';
   }
   function showSchemaBanner(){
     showBanner('error',
-      `<strong>Missing columns for Subtasks / Comments / Activity Log.</strong>
+      `<strong>Missing columns for Subtasks / Comments / Activity Log / Requester / Assignee.</strong>
       Go to <strong>Supabase → SQL Editor</strong> and run the SQL below, then try again:
       <pre>${escapeHtml(SCHEMA_FIX_SQL)}</pre>`,
       true
@@ -946,6 +959,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
   function rowToTask(r){
     return {
       id:r.id, title:r.title, project:r.project, description:r.description || '',
+      requester:r.requester || '', assignee:r.assignee || '',
       start:r.start_date, due:r.due_date, priority:r.priority, status:r.status,
       subtasks: r.subtasks || [], comments: r.comments || [], activity: r.activity || []
     };
@@ -953,6 +967,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
   function taskToRow(t){
     return {
       title:t.title, project:t.project, description:t.description || '',
+      requester:t.requester || '', assignee:t.assignee || '',
       start_date:t.start, due_date:t.due, priority:t.priority, status:t.status,
       subtasks: t.subtasks || [], comments: t.comments || [], activity: t.activity || []
     };
@@ -1179,6 +1194,8 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     const notes = [];
     if(oldT.title !== newFields.title) notes.push(`Renamed task to "${newFields.title}".`);
     if(oldT.project !== newFields.project) notes.push(`Changed project: ${oldT.project} → ${newFields.project}.`);
+    if((oldT.requester||'') !== (newFields.requester||'')) notes.push(`Changed requested by: ${oldT.requester||'—'} → ${newFields.requester||'—'}.`);
+    if((oldT.assignee||'') !== (newFields.assignee||'')) notes.push(`Changed assignee: ${oldT.assignee||'—'} → ${newFields.assignee||'—'}.`);
     if(oldT.start !== newFields.start) notes.push(`Changed start date: ${fmtDate(oldT.start)} → ${fmtDate(newFields.start)}.`);
     if(oldT.due !== newFields.due) notes.push(`Changed due date: ${fmtDate(oldT.due)} → ${fmtDate(newFields.due)}.`);
     if(oldT.priority !== newFields.priority) notes.push(`Changed priority: ${priorityLabel(oldT.priority)} → ${priorityLabel(newFields.priority)}.`);
@@ -1190,7 +1207,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     const off = (n) => { const d=new Date(); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
     const mkActivity = () => [{id:uid(), text:'Task created.', time: nowISO()}];
     const list = [
-      {id:uid(), title:'Build brand identity system', project:'New Product', description:'Design the logo, color palette, and typography for the new brand.', start:off(-2), due:off(4), priority:'high', status:'doing',
+      {id:uid(), title:'Build brand identity system', project:'New Product', description:'Design the logo, color palette, and typography for the new brand.', requester:'Product Manager', assignee:'Design Team', start:off(-2), due:off(4), priority:'high', status:'doing',
         subtasks:[
           {id:uid(), title:'Sketch logo concepts', due:off(1), done:true},
           {id:uid(), title:'Pick color palette & typography', due:off(3), done:false},
@@ -1199,10 +1216,10 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
         comments:[{id:uid(), text:'Client wants to see two more logo options.', time:new Date(Date.now()-3*3600e3).toISOString()}],
         activity: mkActivity()
       },
-      {id:uid(), title:"Design this week's social media posts", project:'Social Media', description:'', start:off(0), due:off(2), priority:'med', status:'todo', subtasks:[], comments:[], activity: mkActivity()},
-      {id:uid(), title:'Print event brochure', project:'Print', description:'', start:off(-5), due:off(-1), priority:'high', status:'doing', subtasks:[], comments:[], activity: mkActivity()},
-      {id:uid(), title:'Product repositioning strategy', project:'Repositioning', description:'', start:off(1), due:off(9), priority:'med', status:'todo', subtasks:[], comments:[], activity: mkActivity()},
-      {id:uid(), title:'Approve business card print proof', project:'Print', description:'', start:off(-6), due:off(-3), priority:'low', status:'done', subtasks:[], comments:[], activity: mkActivity()},
+      {id:uid(), title:"Design this week's social media posts", project:'Social Media', description:'', requester:'Marketing Lead', assignee:'', start:off(0), due:off(2), priority:'med', status:'todo', subtasks:[], comments:[], activity: mkActivity()},
+      {id:uid(), title:'Print event brochure', project:'Print', description:'', requester:'Events Team', assignee:'', start:off(-5), due:off(-1), priority:'high', status:'doing', subtasks:[], comments:[], activity: mkActivity()},
+      {id:uid(), title:'Product repositioning strategy', project:'Repositioning', description:'', requester:'', assignee:'', start:off(1), due:off(9), priority:'med', status:'todo', subtasks:[], comments:[], activity: mkActivity()},
+      {id:uid(), title:'Approve business card print proof', project:'Print', description:'', requester:'', assignee:'', start:off(-6), due:off(-3), priority:'low', status:'done', subtasks:[], comments:[], activity: mkActivity()},
     ];
     list.forEach(t=> syncTaskDueWithSubtasks(t));
     return list;
@@ -1386,11 +1403,16 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
               const prClass = t.priority==='high'?'pr-high':t.priority==='med'?'pr-med':'pr-low';
               const prLabel = t.priority==='high'?'High':t.priority==='med'?'Med':'Low';
               const isSel = selectedIds.has(t.id);
+              const peopleParts = [];
+              if(t.requester) peopleParts.push(`<b>From:</b> ${escapeHtml(t.requester)}`);
+              if(t.assignee) peopleParts.push(`<b>To:</b> ${escapeHtml(t.assignee)}`);
+              const peopleHtml = peopleParts.length ? `<div class="c-people">${peopleParts.join(' &nbsp;·&nbsp; ')}</div>` : '';
               return `
                 <div class="card ${colorClass} ${isSel?'selected':''}" draggable="true" data-id="${t.id}">
                   <input type="checkbox" class="c-check" data-id="${t.id}" ${isSel?'checked':''} title="Select this card">
                   <div class="c-title">${escapeHtml(t.title)}</div>
                   ${t.description ? `<div class="c-desc">${escapeHtml(t.description)}</div>` : ''}
+                  ${peopleHtml}
                   <div class="c-meta">
                     <span class="chip ${prClass}">${prLabel}</span>
                     <span class="c-date">${fmtDate(t.start)} → ${fmtDate(t.due)}</span>
@@ -1571,7 +1593,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     root.innerHTML = `
       <table class="tasklist">
         <thead><tr>
-          <th>Task</th><th>Project</th><th>Start</th><th>Due</th>
+          <th>Task</th><th>Project</th><th>Requested By</th><th>Assigned To</th><th>Start</th><th>Due</th>
           <th>Priority</th><th>Status</th><th></th>
         </tr></thead>
         <tbody>
@@ -1583,6 +1605,8 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
             <tr>
               <td>${escapeHtml(t.title)}</td>
               <td><span class="t-project"><span class="sw" style="display:inline-block;width:7px;height:7px;border-radius:2px;background:${projectColor(t.project)};margin-right:8px;"></span>${escapeHtml(t.project)}</span></td>
+              <td>${escapeHtml(t.requester || '—')}</td>
+              <td>${escapeHtml(t.assignee || '—')}</td>
               <td>${fmtDate(t.start)}</td>
               <td style="color:${overdue?'var(--red)':'inherit'};font-weight:${overdue?'600':'400'};">${fmtDate(t.due)}${overdue?' ⚠':''}</td>
               <td>${prLabel}</td>
@@ -1610,6 +1634,8 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     $('#modalTitle').textContent = t ? 'Edit Task' : 'Add Task';
     $('#f-title').value = t ? t.title : '';
     $('#f-project').value = t ? t.project : '';
+    $('#f-requester').value = t ? (t.requester || '') : '';
+    $('#f-assignee').value = t ? (t.assignee || '') : '';
     $('#f-desc').value = t ? (t.description || '') : '';
     $('#f-start').value = fmtDate(t ? t.start : todayStr());
     $('#f-due').value = fmtDate(t ? t.due : todayStr());
@@ -1644,6 +1670,8 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     if(!title){ $('#f-title').focus(); return; }
     let project = $('#f-project').value.trim() || 'Uncategorized';
     const description = $('#f-desc').value.trim();
+    const requester = $('#f-requester').value.trim();
+    const assignee = $('#f-assignee').value.trim();
     const startParsed = parseDMY($('#f-start').value);
     const dueParsed = parseDMY($('#f-due').value);
     if(startParsed === null){ alert('Start date is invalid. Please use the dd/mm/yy format.'); $('#f-start').focus(); return; }
@@ -1653,7 +1681,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     if(due < start) due = start;
     const priority = $('#f-priority').value;
     let status = $('#f-status').value;
-    const fields = {title, project, description, start, due, priority, status};
+    const fields = {title, project, description, requester, assignee, start, due, priority, status};
 
     const saveBtn = $('#saveBtn');
     saveBtn.disabled = true;
@@ -1702,6 +1730,8 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
       'Task Name': t.title,
       'Project': t.project,
       'Description': t.description || '',
+      'Requested By': t.requester || '',
+      'Assigned To': t.assignee || '',
       'Start Date': fmtDate(t.start),
       'Due Date': fmtDate(t.due),
       'Priority': priorityLabel(t.priority),
@@ -1764,7 +1794,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
 
     const allSorted = [...tasks].sort((a,b)=> a.due.localeCompare(b.due));
     const wsAll = XLSX.utils.json_to_sheet(allSorted.map(taskRow));
-    wsAll['!cols'] = [{wch:32},{wch:18},{wch:34},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
+    wsAll['!cols'] = [{wch:32},{wch:18},{wch:34},{wch:18},{wch:18},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
     XLSX.utils.book_append_sheet(wb, wsAll, 'All Tasks');
 
     // Separate sheet for Subtasks (the only part of the new sections included in the Excel export)
@@ -1794,7 +1824,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
     const wsOverdue = overdueRows.length
       ? XLSX.utils.json_to_sheet(overdueRows)
       : XLSX.utils.json_to_sheet([{'Note':'No overdue tasks'}]);
-    wsOverdue['!cols'] = [{wch:32},{wch:18},{wch:34},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16},{wch:14}];
+    wsOverdue['!cols'] = [{wch:32},{wch:18},{wch:34},{wch:18},{wch:18},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16},{wch:14}];
     XLSX.utils.book_append_sheet(wb, wsOverdue, 'Overdue');
 
     const statusGroups = [
@@ -1807,7 +1837,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
         .sort((a,b)=> a.due.localeCompare(b.due))
         .map(taskRow);
       const ws = rows.length ? XLSX.utils.json_to_sheet(rows) : XLSX.utils.json_to_sheet([{'Note':'No tasks'}]);
-      ws['!cols'] = [{wch:32},{wch:18},{wch:34},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
+      ws['!cols'] = [{wch:32},{wch:18},{wch:34},{wch:18},{wch:18},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
       XLSX.utils.book_append_sheet(wb, ws, g.name);
     });
 
@@ -1817,7 +1847,7 @@ alter table tasks add column if not exists activity jsonb not null default '[]':
         .map(taskRow);
       const safeName = p.replace(/[\\\/\?\*\[\]:]/g,'').slice(0,28) || 'Project';
       const ws = XLSX.utils.json_to_sheet(rows);
-      ws['!cols'] = [{wch:32},{wch:18},{wch:34},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
+      ws['!cols'] = [{wch:32},{wch:18},{wch:34},{wch:18},{wch:18},{wch:12},{wch:14},{wch:12},{wch:16},{wch:16}];
       XLSX.utils.book_append_sheet(wb, ws, safeName);
     });
 
