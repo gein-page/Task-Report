@@ -140,12 +140,40 @@
   .runway-day{
     width:38px;min-width:38px;text-align:center;padding:8px 0 8px;
     font-family:var(--font-mono);font-size:11px;color:var(--ink-soft);border-right:1px solid var(--line);
+    position:relative;
   }
-  .runway-day.today{background:var(--accent-soft);color:var(--accent);font-weight:600;}
+  .runway-day.today{
+    background:var(--accent-soft);color:var(--accent);font-weight:600;
+    animation: todayHeaderPulse 2s ease-in-out infinite;
+  }
   .runway-day.weekend{background:#FBFAF6;}
   .runway-day .dow{display:block;font-size:9px;opacity:.7;margin-bottom:4px;}
+  .runway-day .today-dot{
+    display:block;width:5px;height:5px;border-radius:50%;background:var(--accent);
+    margin:3px auto 0;animation: todayDotPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes todayHeaderPulse{
+    0%,100%{background:var(--accent-soft);}
+    50%{background:#D9E0FB;}
+  }
+  @keyframes todayDotPulse{
+    0%,100%{transform:scale(1);opacity:1;}
+    50%{transform:scale(1.7);opacity:.45;}
+  }
+  .runway-today-line{
+    position:absolute;top:0;bottom:0;width:2px;
+    background:linear-gradient(to bottom, var(--accent), rgba(52,87,213,.12));
+    box-shadow:0 0 6px rgba(52,87,213,.55);
+    pointer-events:none;z-index:4;
+    animation: todayLineGlow 2s ease-in-out infinite;
+  }
+  @keyframes todayLineGlow{
+    0%,100%{opacity:.45;}
+    50%{opacity:1;}
+  }
   .runway-row{display:flex;border-bottom:1px solid var(--line);}
   .runway-row:last-child{border-bottom:none;}
+  .runway-row.runway-empty-row{opacity:.7;}
   .runway-taskname{
     width:220px;min-width:220px;flex-shrink:0;border-right:1px solid var(--line);
     padding:12px 16px;position:sticky;left:0;background:var(--paper-raised);z-index:1;
@@ -1307,12 +1335,9 @@ alter table tasks add column if not exists assignee text not null default '';`;
 
     // Overview timeline: always shows every task (ignores the Kanban/List filters below),
     // acting as a single big at-a-glance summary above the Add Task toolbar.
-    const overviewRoot = $('#overviewRoot');
-    if(tasks.length === 0){
-      overviewRoot.innerHTML = `<div class="empty"><h3>No tasks yet</h3><p>Click "Add Task" to start planning your schedule.</p></div>`;
-    } else {
-      renderRunway(overviewRoot, tasks);
-    }
+    // It always renders the full day-by-day calendar strip — with a live "today" marker —
+    // even when there are no tasks yet.
+    renderRunway($('#overviewRoot'), tasks);
 
     const root = $('#viewRoot');
     const list = filteredTasks();
@@ -1330,14 +1355,23 @@ alter table tasks add column if not exists assignee text not null default '';`;
 
   function renderRunway(root, list){
     const today = todayStr();
-    let minStart = list.reduce((m,t)=> t.start<m?t.start:m, list[0].start);
-    let maxDue = list.reduce((m,t)=> t.due>m?t.due:m, list[0].due);
+    let minStart, maxDue;
+    if(list.length === 0){
+      // No tasks at all yet — still show a live calendar window centered around today
+      // so the date grid and "today" indicator are always visible.
+      minStart = offsetISO(-3);
+      maxDue = offsetISO(11);
+    } else {
+      minStart = list.reduce((m,t)=> t.start<m?t.start:m, list[0].start);
+      maxDue = list.reduce((m,t)=> t.due>m?t.due:m, list[0].due);
+    }
     if(today < minStart) minStart = today;
     if(today > maxDue) maxDue = today;
     const start = new Date(minStart+'T00:00:00'); start.setDate(start.getDate()-2);
     const end = new Date(maxDue+'T00:00:00'); end.setDate(end.getDate()+3);
     const totalDays = Math.max(1, Math.round((end-start)/86400000)+1);
     const dow = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+    const todayOffsetDays = daysBetween(isoFromDate(start), today);
 
     let daysHtml = '';
     for(let i=0;i<totalDays;i++){
@@ -1345,42 +1379,57 @@ alter table tasks add column if not exists assignee text not null default '';`;
       const ds = d.toISOString().slice(0,10);
       const isToday = ds === today;
       const isWeekend = d.getDay()===0 || d.getDay()===6;
-      daysHtml += `<div class="runway-day ${isToday?'today':''} ${isWeekend?'weekend':''}">
-        <span class="dow">${dow[d.getDay()]}</span>${d.getDate()}
+      daysHtml += `<div class="runway-day ${isToday?'today':''} ${isWeekend?'weekend':''}" ${isToday?'title="Hôm nay"':''}>
+        <span class="dow">${dow[d.getDay()]}</span>${d.getDate()}${isToday?'<span class="today-dot"></span>':''}
       </div>`;
     }
 
     let rowsHtml = '';
-    list.forEach(t=>{
-      const s = new Date(t.start+'T00:00:00');
-      const offsetDays = Math.round((s-start)/86400000);
-      const spanDays = Math.max(1, daysBetween(t.start, t.due)+1);
-      const color = t.status==='done' ? '#2F7D5C' : (t.priority==='high' ? '#C13F3F' : projectColor(t.project));
-      const left = offsetDays*38;
-      const width = spanDays*38 - 4;
-      rowsHtml += `
-        <div class="runway-row">
+    if(list.length === 0){
+      rowsHtml = `
+        <div class="runway-row runway-empty-row">
           <div class="runway-taskname">
-            <div class="t-title">${escapeHtml(t.title)}</div>
-            <div class="t-project"><span class="sw" style="background:${projectColor(t.project)}"></span>${escapeHtml(t.project)}</div>
+            <div class="t-title" style="color:var(--ink-soft);font-weight:500;">Chưa có công việc nào</div>
           </div>
           <div class="runway-lane" style="min-width:${totalDays*38}px;">
-            <div class="lane-inner">
-              <div class="runway-bar" data-id="${t.id}" style="left:${left}px;width:${width}px;background:${color};"></div>
-            </div>
+            <div class="lane-inner"></div>
           </div>
         </div>`;
-    });
+    } else {
+      list.forEach(t=>{
+        const s = new Date(t.start+'T00:00:00');
+        const offsetDays = Math.round((s-start)/86400000);
+        const spanDays = Math.max(1, daysBetween(t.start, t.due)+1);
+        const color = t.status==='done' ? '#2F7D5C' : (t.priority==='high' ? '#C13F3F' : projectColor(t.project));
+        const left = offsetDays*38;
+        const width = spanDays*38 - 4;
+        rowsHtml += `
+          <div class="runway-row">
+            <div class="runway-taskname">
+              <div class="t-title">${escapeHtml(t.title)}</div>
+              <div class="t-project"><span class="sw" style="background:${projectColor(t.project)}"></span>${escapeHtml(t.project)}</div>
+            </div>
+            <div class="runway-lane" style="min-width:${totalDays*38}px;">
+              <div class="lane-inner">
+                <div class="runway-bar" data-id="${t.id}" style="left:${left}px;width:${width}px;background:${color};"></div>
+              </div>
+            </div>
+          </div>`;
+      });
+    }
 
     root.innerHTML = `
       <div class="runway">
         <div class="runway-scroll">
-          <div style="min-width:${220+totalDays*38}px;">
+          <div style="min-width:${220+totalDays*38}px;position:relative;">
             <div class="runway-head">
               <div class="runway-labelcol">Task</div>
               <div class="runway-days">${daysHtml}</div>
             </div>
-            ${rowsHtml}
+            <div class="runway-body" style="position:relative;">
+              ${rowsHtml}
+              <div class="runway-today-line" style="left:${220+todayOffsetDays*38+18}px;"></div>
+            </div>
           </div>
         </div>
       </div>
