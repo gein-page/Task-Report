@@ -155,7 +155,7 @@
     text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;
     position:sticky;left:0;background:var(--paper-raised);z-index:3;
   }
-  .runway-days{display:flex;}
+  .runway-days{display:flex;flex:0 0 auto;}
   .runway-day{
     width:38px;min-width:38px;text-align:center;padding:8px 0 8px;
     font-family:var(--font-mono);font-size:11px;color:var(--ink-soft);border-right:1px solid var(--line);
@@ -201,7 +201,7 @@
   .runway-taskname .t-project{font-size:11.5px;color:var(--ink-soft);
     display:inline-flex;align-items:center;gap:8px;}
   .runway-taskname .t-project .sw{width:7px;height:7px;border-radius:2px;}
-  .runway-lane{position:relative;flex:1;background-image:repeating-linear-gradient(to right, transparent, transparent 37px, var(--line) 37px, var(--line) 38px);}
+  .runway-lane{position:relative;flex:0 0 auto;background-image:repeating-linear-gradient(to right, transparent, transparent 37px, var(--line) 37px, var(--line) 38px);}
   .runway-lane .lane-inner{position:relative;height:100%;min-height:52px;}
   .runway-bar{
     position:absolute;top:12px;height:26px;border-radius:6px;
@@ -1405,6 +1405,7 @@ alter table tasks add column if not exists assignee text not null default '';`;
     const DAY_W = 38;
     const TOTAL_DAYS = 7; // fixed 7-day window, Monday-start
     const dow = ['Mo','Tu','We','Th','Fr','Sa','Su'];
+    const gridWidth = TOTAL_DAYS * DAY_W;
 
     const today = todayStr();
     const weekStart = runwayStart; // ISO date of the Monday being shown
@@ -1434,7 +1435,7 @@ alter table tasks add column if not exists assignee text not null default '';`;
           <div class="runway-taskname">
             <div class="t-title" style="color:var(--ink-soft);font-weight:500;">${msg}</div>
           </div>
-          <div class="runway-lane" style="min-width:${TOTAL_DAYS*DAY_W}px;">
+          <div class="runway-lane" style="width:${gridWidth}px;">
             <div class="lane-inner"></div>
           </div>
         </div>`;
@@ -1453,7 +1454,7 @@ alter table tasks add column if not exists assignee text not null default '';`;
               <div class="t-title">${escapeHtml(t.title)}</div>
               <div class="t-project"><span class="sw" style="background:${projectColor(t.project)}"></span>${escapeHtml(t.project)}</div>
             </div>
-            <div class="runway-lane" style="min-width:${TOTAL_DAYS*DAY_W}px;">
+            <div class="runway-lane" style="width:${gridWidth}px;">
               <div class="lane-inner">
                 <div class="runway-bar" data-id="${t.id}" style="left:${left}px;width:${width}px;background:${color};"></div>
               </div>
@@ -1474,7 +1475,7 @@ alter table tasks add column if not exists assignee text not null default '';`;
           <button type="button" class="runway-today-btn" id="runwayToday">Hôm nay</button>
         </div>
         <div class="runway-scroll">
-          <div style="min-width:${220+TOTAL_DAYS*DAY_W}px;position:relative;">
+          <div style="width:${220+gridWidth}px;position:relative;">
             <div class="runway-head">
               <div class="runway-labelcol">Task</div>
               <div class="runway-days">${daysHtml}</div>
