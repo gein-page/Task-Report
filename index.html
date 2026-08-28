@@ -126,6 +126,25 @@
     background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);
     box-shadow:var(--shadow);overflow:hidden;
   }
+  .runway-nav{
+    display:flex;align-items:center;gap:10px;padding:12px 16px;
+    border-bottom:1px solid var(--line);background:#FBFAF6;
+  }
+  .runway-nav-btn{
+    background:var(--paper-raised);border:1px solid var(--line);border-radius:7px;cursor:pointer;
+    width:30px;height:30px;font-size:16px;line-height:1;color:var(--ink-soft);flex-shrink:0;
+  }
+  .runway-nav-btn:hover{background:var(--grey-chip);color:var(--ink);}
+  .runway-range{
+    font-family:var(--font-mono);font-size:12.5px;color:var(--ink);font-weight:600;
+    flex:1;text-align:center;
+  }
+  .runway-today-btn{
+    font-family:var(--font-main);font-size:12px;font-weight:600;padding:7px 12px;
+    border-radius:7px;border:1px solid var(--line);background:var(--paper-raised);
+    color:var(--accent);cursor:pointer;white-space:nowrap;
+  }
+  .runway-today-btn:hover{background:var(--accent-soft);}
   .runway-scroll{overflow-x:auto;}
   .runway-head{
     display:flex;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--paper-raised);z-index:2;
@@ -688,6 +707,7 @@ alter table tasks add column if not exists assignee text not null default '';`;
   let currentView = 'board';
   let editingId = null;
   let selectedIds = new Set();   // multi-selected card ids on the Kanban board
+  let runwayStart = mondayOf(todayStr());   // ISO date (Monday) of the week currently shown in the Task Overview table
 
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -938,9 +958,19 @@ alter table tasks add column if not exists assignee text not null default '';`;
   }
 
   function nowISO(){ return new Date().toISOString(); }
+  // IMPORTANT: use the local calendar date (not toISOString(), which is UTC).
+  // Using UTC here made "today" jump to the wrong day for users outside UTC,
+  // which is why the today-marker in the overview table was misaligned.
   function todayStr(){
-    const d = new Date();
-    return d.toISOString().slice(0,10);
+    return isoFromDate(new Date());
+  }
+  // Returns the ISO date (yyyy-mm-dd) of the Monday of the week containing the given ISO date.
+  function mondayOf(iso){
+    const d = new Date(iso+'T00:00:00');
+    const day = d.getDay(); // 0=Sun..6=Sat
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate()+diff);
+    return isoFromDate(d);
   }
   function daysBetween(a,b){
     return Math.round((new Date(b+'T00:00:00') - new Date(a+'T00:00:00'))/86400000);
@@ -960,6 +990,24 @@ alter table tasks add column if not exists assignee text not null default '';`;
     if(t.due < today) return 'red';
     if(daysBetween(today, t.due) <= DUE_SOON_DAYS) return 'yellow';
     return 'blue';
+  }
+
+  // Maps a task to the same status color used on its Kanban card, so the Task Overview
+  // table bars always match: blue = on track, amber = due soon, green = done, red = overdue.
+  function runwayBarColor(t){
+    const key = cardColorKey(t);
+    return {blue:'var(--accent)', yellow:'var(--amber)', green:'var(--green)', red:'var(--red)'}[key];
+  }
+
+  function shiftRunwayWeek(days){
+    const d = new Date(runwayStart+'T00:00:00');
+    d.setDate(d.getDate()+days);
+    runwayStart = isoFromDate(d);
+    render();
+  }
+  function goToCurrentRunwayWeek(){
+    runwayStart = mondayOf(todayStr());
+    render();
   }
 
   function showBanner(type, html, closable){
@@ -1249,7 +1297,7 @@ alter table tasks add column if not exists assignee text not null default '';`;
   }
 
   function seedTasks(){
-    const off = (n) => { const d=new Date(); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+    const off = (n) => offsetISO(n);
     const mkActivity = () => [{id:uid(), text:'Task created.', time: nowISO()}];
     const list = [
       {id:uid(), title:'Build brand identity system', project:'New Product', description:'Design the logo, color palette, and typography for the new brand.', requester:'Product Manager', assignee:'Design Team', start:off(-2), due:off(4), priority:'high', status:'doing',
@@ -1353,63 +1401,59 @@ alter table tasks add column if not exists assignee text not null default '';`;
     else renderList(root, list);
   }
 
-  function renderRunway(root, list){
+  function renderRunway(root, allTasks){
+    const DAY_W = 38;
+    const TOTAL_DAYS = 7; // fixed 7-day window, Monday-start
+    const dow = ['Mo','Tu','We','Th','Fr','Sa','Su'];
+
     const today = todayStr();
-    let minStart, maxDue;
-    if(list.length === 0){
-      // No tasks at all yet — still show a live calendar window centered around today
-      // so the date grid and "today" indicator are always visible.
-      minStart = offsetISO(-3);
-      maxDue = offsetISO(11);
-    } else {
-      minStart = list.reduce((m,t)=> t.start<m?t.start:m, list[0].start);
-      maxDue = list.reduce((m,t)=> t.due>m?t.due:m, list[0].due);
-    }
-    if(today < minStart) minStart = today;
-    if(today > maxDue) maxDue = today;
-    const start = new Date(minStart+'T00:00:00'); start.setDate(start.getDate()-2);
-    const end = new Date(maxDue+'T00:00:00'); end.setDate(end.getDate()+3);
-    const totalDays = Math.max(1, Math.round((end-start)/86400000)+1);
-    const dow = ['Su','Mo','Tu','We','Th','Fr','Sa'];
-    const todayOffsetDays = daysBetween(isoFromDate(start), today);
+    const weekStart = runwayStart; // ISO date of the Monday being shown
+    const weekStartDate = new Date(weekStart+'T00:00:00');
+    const weekEndDate = new Date(weekStartDate); weekEndDate.setDate(weekEndDate.getDate()+(TOTAL_DAYS-1));
+    const weekEnd = isoFromDate(weekEndDate);
 
     let daysHtml = '';
-    for(let i=0;i<totalDays;i++){
-      const d = new Date(start); d.setDate(d.getDate()+i);
-      const ds = d.toISOString().slice(0,10);
+    for(let i=0;i<TOTAL_DAYS;i++){
+      const d = new Date(weekStartDate); d.setDate(d.getDate()+i);
+      const ds = isoFromDate(d);
       const isToday = ds === today;
       const isWeekend = d.getDay()===0 || d.getDay()===6;
       daysHtml += `<div class="runway-day ${isToday?'today':''} ${isWeekend?'weekend':''}" ${isToday?'title="Hôm nay"':''}>
-        <span class="dow">${dow[d.getDay()]}</span>${d.getDate()}${isToday?'<span class="today-dot"></span>':''}
+        <span class="dow">${dow[i]}</span>${d.getDate()}${isToday?'<span class="today-dot"></span>':''}
       </div>`;
     }
 
+    // Only tasks that overlap the visible 7-day window, clipped to that window.
+    const visible = allTasks.filter(t=> t.due >= weekStart && t.start <= weekEnd);
+
     let rowsHtml = '';
-    if(list.length === 0){
+    if(visible.length === 0){
+      const msg = allTasks.length === 0 ? 'Chưa có công việc nào' : 'Không có công việc nào trong tuần này';
       rowsHtml = `
         <div class="runway-row runway-empty-row">
           <div class="runway-taskname">
-            <div class="t-title" style="color:var(--ink-soft);font-weight:500;">Chưa có công việc nào</div>
+            <div class="t-title" style="color:var(--ink-soft);font-weight:500;">${msg}</div>
           </div>
-          <div class="runway-lane" style="min-width:${totalDays*38}px;">
+          <div class="runway-lane" style="min-width:${TOTAL_DAYS*DAY_W}px;">
             <div class="lane-inner"></div>
           </div>
         </div>`;
     } else {
-      list.forEach(t=>{
-        const s = new Date(t.start+'T00:00:00');
-        const offsetDays = Math.round((s-start)/86400000);
-        const spanDays = Math.max(1, daysBetween(t.start, t.due)+1);
-        const color = t.status==='done' ? '#2F7D5C' : (t.priority==='high' ? '#C13F3F' : projectColor(t.project));
-        const left = offsetDays*38;
-        const width = spanDays*38 - 4;
+      visible.forEach(t=>{
+        const clampedStart = t.start < weekStart ? weekStart : t.start;
+        const clampedEnd = t.due > weekEnd ? weekEnd : t.due;
+        const offsetDays = daysBetween(weekStart, clampedStart);
+        const spanDays = Math.max(1, daysBetween(clampedStart, clampedEnd)+1);
+        const color = runwayBarColor(t);
+        const left = offsetDays*DAY_W;
+        const width = Math.max(DAY_W-4, spanDays*DAY_W - 4);
         rowsHtml += `
           <div class="runway-row">
             <div class="runway-taskname">
               <div class="t-title">${escapeHtml(t.title)}</div>
               <div class="t-project"><span class="sw" style="background:${projectColor(t.project)}"></span>${escapeHtml(t.project)}</div>
             </div>
-            <div class="runway-lane" style="min-width:${totalDays*38}px;">
+            <div class="runway-lane" style="min-width:${TOTAL_DAYS*DAY_W}px;">
               <div class="lane-inner">
                 <div class="runway-bar" data-id="${t.id}" style="left:${left}px;width:${width}px;background:${color};"></div>
               </div>
@@ -1418,17 +1462,26 @@ alter table tasks add column if not exists assignee text not null default '';`;
       });
     }
 
+    const todayInView = today >= weekStart && today <= weekEnd;
+    const todayOffsetDays = todayInView ? daysBetween(weekStart, today) : -1;
+
     root.innerHTML = `
       <div class="runway">
+        <div class="runway-nav">
+          <button type="button" class="runway-nav-btn" id="runwayPrev" title="Tuần trước">‹</button>
+          <div class="runway-range">${fmtDate(weekStart)} – ${fmtDate(weekEnd)}</div>
+          <button type="button" class="runway-nav-btn" id="runwayNext" title="Tuần sau">›</button>
+          <button type="button" class="runway-today-btn" id="runwayToday">Hôm nay</button>
+        </div>
         <div class="runway-scroll">
-          <div style="min-width:${220+totalDays*38}px;position:relative;">
+          <div style="min-width:${220+TOTAL_DAYS*DAY_W}px;position:relative;">
             <div class="runway-head">
               <div class="runway-labelcol">Task</div>
               <div class="runway-days">${daysHtml}</div>
             </div>
             <div class="runway-body" style="position:relative;">
               ${rowsHtml}
-              <div class="runway-today-line" style="left:${220+todayOffsetDays*38+18}px;"></div>
+              ${todayInView ? `<div class="runway-today-line" style="left:${220+todayOffsetDays*DAY_W+18}px;"></div>` : ''}
             </div>
           </div>
         </div>
@@ -1437,6 +1490,9 @@ alter table tasks add column if not exists assignee text not null default '';`;
     $$('.runway-bar', root).forEach(el=>{
       el.addEventListener('click', ()=> openModal(el.dataset.id));
     });
+    $('#runwayPrev', root).addEventListener('click', ()=> shiftRunwayWeek(-7));
+    $('#runwayNext', root).addEventListener('click', ()=> shiftRunwayWeek(7));
+    $('#runwayToday', root).addEventListener('click', ()=> goToCurrentRunwayWeek());
   }
 
   function renderBoard(root, list){
